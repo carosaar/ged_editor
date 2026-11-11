@@ -3,4 +3,4 @@
 from typing import Final
 
 APP_NAME: Final[str] = "ged_editor"
-APP_VERSION: Final[str] = "0.1.0"
+APP_VERSION: Final[str] = "0.3.0"

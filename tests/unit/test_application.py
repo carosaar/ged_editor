@@ -15,12 +15,9 @@ def test_run_shows_the_main_window_and_returns_exit_code() -> None:
     def show_window(window: MainWindow) -> None:
         shown_titles.append(window.windowTitle())
 
-    def exit_event_loop(_application: QApplication) -> int:
-        return 3
-
     with (
         patch.object(MainWindow, "show", show_window),
-        patch.object(QApplication, "exec", exit_event_loop),
+        patch.object(QApplication, "exec", return_value=3),
     ):
         result = run([])
 
