@@ -19,9 +19,10 @@ class PersonRepository:
         cursor = self._connection.execute(
             """
             INSERT INTO person (
-                gedcom_xref, name, sex, is_existing_record, created_at, modified_at
+                gedcom_xref, name, sex, is_existing_record, created_at, modified_at,
+                needs_export, source_snapshot
             )
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 person.gedcom_xref,
@@ -30,6 +31,8 @@ class PersonRepository:
                 int(person.is_existing_record),
                 person.created_at.isoformat(),
                 person.modified_at.isoformat(),
+                int(person.needs_export),
+                person.source_snapshot,
             ),
         )
         created = self.get_by_id(cursor.lastrowid)
@@ -44,13 +47,33 @@ class PersonRepository:
         row = self._connection.execute(
             """
             SELECT id, gedcom_xref, name, sex, is_existing_record,
-                   created_at, modified_at
+                   created_at, modified_at, needs_export, source_snapshot
             FROM person
             WHERE id = ?
             """,
             (person_id,),
         ).fetchone()
         return self._person_from_row(row) if row is not None else None
+
+    def get_by_xref(self, gedcom_xref: str | None) -> Person | None:
+        """Return a person by GEDCOM XREF, or None when no XREF is supplied."""
+        if gedcom_xref is None:
+            return None
+        rows = self._connection.execute(
+            """
+            SELECT id, gedcom_xref, name, sex, is_existing_record,
+                   created_at, modified_at, needs_export, source_snapshot
+            FROM person
+            WHERE gedcom_xref = ?
+            LIMIT 2
+            """,
+            (gedcom_xref,),
+        ).fetchall()
+        if len(rows) > 1:
+            raise sqlite3.IntegrityError(
+                f"Multiple person records use GEDCOM XREF {gedcom_xref}."
+            )
+        return self._person_from_row(rows[0]) if rows else None
 
     def update(self, person: Person) -> Person | None:
         """Update a person and return the persisted record."""
@@ -60,7 +83,8 @@ class PersonRepository:
             """
             UPDATE person
             SET gedcom_xref = ?, name = ?, sex = ?, is_existing_record = ?,
-                created_at = ?, modified_at = ?
+                created_at = ?, modified_at = ?, needs_export = ?,
+                source_snapshot = ?
             WHERE id = ?
             """,
             (
@@ -70,6 +94,8 @@ class PersonRepository:
                 int(person.is_existing_record),
                 person.created_at.isoformat(),
                 person.modified_at.isoformat(),
+                int(person.needs_export),
+                person.source_snapshot,
                 person.id,
             ),
         )
@@ -90,4 +116,6 @@ class PersonRepository:
             is_existing_record=bool(row["is_existing_record"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             modified_at=datetime.fromisoformat(row["modified_at"]),
+            needs_export=bool(row["needs_export"]),
+            source_snapshot=row["source_snapshot"],
         )

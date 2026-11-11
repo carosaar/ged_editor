@@ -9,6 +9,7 @@ from ged_editor.database.schema import (
     SCHEMA_VERSION,
     initialize_schema,
     initialize_schema_statements,
+    upgrade_schema_v4,
     validate_project_schema,
     validate_schema,
 )
@@ -67,7 +68,7 @@ class DatabaseConnection:
         validate_schema(self.connection)
 
     def ensure_current_schema(self) -> None:
-        """Upgrade a phase-2 project after first preserving its original file."""
+        """Upgrade an older project after preserving its original file."""
         connection = self.connection
         validate_project_schema(connection)
 
@@ -87,6 +88,7 @@ class DatabaseConnection:
             self.create_migration_backup()
             with connection:
                 initialize_schema_statements(connection)
+                upgrade_schema_v4(connection)
                 connection.execute(
                     'UPDATE meta SET "value" = ? WHERE "key" = ?',
                     (SCHEMA_VERSION, "schema_version"),

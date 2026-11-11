@@ -34,14 +34,14 @@ Lauffähiges Entwicklungsprojekt erzeugen.
 
 ## Aufgaben
 
-- [ ] Repository anlegen
-- [ ] Python-Projekt aufsetzen
-- [ ] PySide6 integrieren
-- [ ] pytest integrieren
-- [ ] Logging einrichten
-- [ ] Konfigurationsverwaltung aufbauen
-- [ ] Hauptfenster erstellen
-- [ ] Projektstruktur gemäß ADR-010 umsetzen
+- [x] Repository anlegen
+- [x] Python-Projekt aufsetzen
+- [x] PySide6 integrieren
+- [x] pytest integrieren
+- [x] Logging einrichten
+- [x] Konfigurationsverwaltung aufbauen
+- [x] Hauptfenster erstellen
+- [x] Projektstruktur gemäß ADR-010 umsetzen
 
 ## Ergebnis
 
@@ -63,9 +63,9 @@ Projektdateien erstellen und verwalten.
 
 ## Aufgaben
 
-- [ ] SQLite-Schema definieren
-- [ ] EDG-Dateiformat festlegen
-- [ ] Projekterstellung
+- [x] SQLite-Schema definieren
+- [x] EDG-Dateiformat festlegen
+- [x] Projekterstellung
 - [ ] Projekt öffnen
 - [ ] Projekt speichern
 - [ ] Projekt schließen

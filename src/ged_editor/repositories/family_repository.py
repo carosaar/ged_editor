@@ -20,9 +20,9 @@ class FamilyRepository:
             """
             INSERT INTO family_link (
                 gedcom_xref, husb_person_id, wife_person_id,
-                is_existing_record, created_at, modified_at
+                is_existing_record, created_at, modified_at, source_snapshot
             )
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 family_link.gedcom_xref,
@@ -31,6 +31,7 @@ class FamilyRepository:
                 int(family_link.is_existing_record),
                 family_link.created_at.isoformat(),
                 family_link.modified_at.isoformat(),
+                family_link.source_snapshot,
             ),
         )
         created = self.get_by_id(cursor.lastrowid)
@@ -45,13 +46,31 @@ class FamilyRepository:
         row = self._connection.execute(
             """
             SELECT id, gedcom_xref, husb_person_id, wife_person_id,
-                   is_existing_record, created_at, modified_at
+                   is_existing_record, created_at, modified_at, source_snapshot
             FROM family_link
             WHERE id = ?
             """,
             (family_link_id,),
         ).fetchone()
         return self._family_from_row(row) if row is not None else None
+
+    def get_by_xref(self, gedcom_xref: str | None) -> FamilyLink | None:
+        """Return a family link by GEDCOM XREF, or None when absent."""
+        if gedcom_xref is None:
+            return None
+        rows = self._connection.execute(
+            """
+            SELECT id, gedcom_xref, husb_person_id, wife_person_id,
+                   is_existing_record, created_at, modified_at, source_snapshot
+            FROM family_link WHERE gedcom_xref = ? LIMIT 2
+            """,
+            (gedcom_xref,),
+        ).fetchall()
+        if len(rows) > 1:
+            raise sqlite3.IntegrityError(
+                f"Multiple family records use GEDCOM XREF {gedcom_xref}."
+            )
+        return self._family_from_row(rows[0]) if rows else None
 
     def update(self, family_link: FamilyLink) -> FamilyLink | None:
         """Update a family link and return the persisted record."""
@@ -61,7 +80,8 @@ class FamilyRepository:
             """
             UPDATE family_link
             SET gedcom_xref = ?, husb_person_id = ?, wife_person_id = ?,
-                is_existing_record = ?, created_at = ?, modified_at = ?
+                is_existing_record = ?, created_at = ?, modified_at = ?,
+                source_snapshot = ?
             WHERE id = ?
             """,
             (
@@ -71,6 +91,7 @@ class FamilyRepository:
                 int(family_link.is_existing_record),
                 family_link.created_at.isoformat(),
                 family_link.modified_at.isoformat(),
+                family_link.source_snapshot,
                 family_link.id,
             ),
         )
@@ -94,4 +115,5 @@ class FamilyRepository:
             is_existing_record=bool(row["is_existing_record"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             modified_at=datetime.fromisoformat(row["modified_at"]),
+            source_snapshot=row["source_snapshot"],
         )

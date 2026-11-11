@@ -129,7 +129,7 @@ Mögliche Projektstatistiken:
 - Urkunden in Bearbeitung
 - Fertige Urkunden
 - Geprüfte Urkunden
-- Exportierte Urkunden
+- ~~Exportierte Urkunden~~ (geändert, vgl. ADR_017 Export-Status jetzt auf Urkundenebene)
 
 Diese Informationen stehen für Prüfberichte und Projektübersichten zur Verfügung.
 

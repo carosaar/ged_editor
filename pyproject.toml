@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ged-editor"
-version = "0.3.0"
+version = "0.4.0"
 description = "Desktop application for recording genealogical documents."
 readme = "README.md"
 requires-python = ">=3.13"

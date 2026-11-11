@@ -48,6 +48,13 @@ class ProjectService:
         """Return the path of the currently active project file."""
         return self._project_path
 
+    @property
+    def connection(self) -> sqlite3.Connection | None:
+        """Return the active project's SQLite connection, if one is open."""
+        if self._database is None:
+            return None
+        return self._database.connection
+
     def create_new_project(
         self,
         project_path: str | Path,

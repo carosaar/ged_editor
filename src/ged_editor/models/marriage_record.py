@@ -12,7 +12,14 @@ class MarriageRecordStatus(StrEnum):
     IN_BEARBEITUNG = "In Bearbeitung"
     FERTIG = "Fertig"
     GEPRUEFT = "Geprüft"
+
+
+class MarriageRecordExportStatus(StrEnum):
+    """Export status values defined independently by ADR-017."""
+
+    NICHT_EXPORTIERT = "Nicht exportiert"
     EXPORTIERT = "Exportiert"
+    KONFLIKT = "Konflikt"
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,3 +45,6 @@ class MarriageRecord:
     note_legitimation: str | None
     note_marginal: str | None
     note_comments: str | None
+    export_status: MarriageRecordExportStatus = (
+        MarriageRecordExportStatus.NICHT_EXPORTIERT
+    )

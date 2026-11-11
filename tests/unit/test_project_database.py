@@ -24,6 +24,7 @@ def test_database_connection_creates_edg_schema(tmp_path) -> None:
         "person",
         "family_link",
         "marriage_record",
+        "source",
     }
 
     project_columns = {
@@ -59,6 +60,7 @@ def test_database_connection_creates_edg_schema(tmp_path) -> None:
         "number",
         "display_number",
         "status",
+        "export_status",
         "created_at",
         "modified_at",
         "husb_person_id",
@@ -74,6 +76,27 @@ def test_database_connection_creates_edg_schema(tmp_path) -> None:
         "note_marginal",
         "note_comments",
     }
+    source_columns = {
+        row["name"]
+        for row in database.connection.execute("PRAGMA table_info(source)")
+    }
+    assert source_columns == {
+        "id",
+        "gedcom_xref",
+        "title",
+        "created_at",
+        "modified_at",
+    }
+    person_columns = {
+        row["name"]
+        for row in database.connection.execute("PRAGMA table_info(person)")
+    }
+    assert {"needs_export", "source_snapshot"} <= person_columns
+    family_columns = {
+        row["name"]
+        for row in database.connection.execute("PRAGMA table_info(family_link)")
+    }
+    assert "source_snapshot" in family_columns
     database.close()
 
     with project_path.open("rb") as project_file:

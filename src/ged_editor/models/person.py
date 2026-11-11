@@ -15,3 +15,5 @@ class Person:
     is_existing_record: bool
     created_at: datetime
     modified_at: datetime
+    needs_export: bool = False
+    source_snapshot: str | None = None

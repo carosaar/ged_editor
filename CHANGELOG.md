@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.4.1
+
+### Korrigiert
+
+- Projektmenü überarbeitet: Öffnen und Speichern funktionieren nun korrekt.
+
+### Hinzugefügt
+
+- Exportstatus für Urkunden gemäß ADR-017 eingeführt.
+- `needs_export` und `source_snapshot` für Personen ergänzt.
+- `source_snapshot` für Familien ergänzt.
+- Vorbereitung der späteren Konflikterkennung zwischen Projekt- und GEDCOM-Stand.
+
+### Geändert
+
+- Datenbankschema auf Version 4 erweitert.
+- Migration bestehender Projekte implementiert.
+- GEDCOM-Import an neue Status- und Snapshotfelder angepasst.
+
+### Architektur
+
+- ADR-001, ADR-015 und ADR-017 umgesetzt.
+- Grundlage für selektiven Export und Konfliktbehandlung geschaffen.
+
+---
+## 0.4.0
+
+- GEDCOM-Import für Personen, Familien und Quellen ergänzt, ohne die Quelldatei zu verändern.
+- Das Schema um die Tabelle `source` erweitert; bestehende Tabellen bleiben unverändert.
+- Importstatistik und Hinweise zu nicht auflösbaren Familienverknüpfungen ergänzt.
+
+---
 ## 0.3.0
 
 ### Hinzugefügt
@@ -25,12 +57,14 @@
 - CRUD-Grundfunktionen für alle Kernobjekte verfügbar
 - Infrastruktur für spätere GEDCOM-Import- und Exportfunktionen vorbereitet
 
+---
 ## 0.2.0
 
 - EDG-Projektdateien mit SQLite-Projektschema erstellen und öffnen.
 - Projektmetadaten über Repository und Service speichern.
 - Neues Projekt über das Dateimenü anlegen.
 
+---
 ## 0.1.0
 
 - Initiales Projektgerüst für `ged_editor`.

@@ -26,6 +26,10 @@ Die Bildung von REFN und SOUR.PAGE erfolgt konfigurierbar.
 
 Die Bildung von SOUR.NOTE erfolgt nach einer festen Struktur.
 
+REFN, SOUR.PAGE und SOUR.NOTE existieren nicht als persistente GEDCOM-Strukturen innerhalb des Projektes.
+
+Sie werden ausschließlich während des Exportvorgangs aus den Erfassungsdaten generiert.
+
 ## REFN
 
 REFN dient der Darstellung der Urkundenkennung.

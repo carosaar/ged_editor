@@ -3,14 +3,18 @@
 import sqlite3
 from datetime import datetime
 
-from ged_editor.models.marriage_record import MarriageRecord, MarriageRecordStatus
+from ged_editor.models.marriage_record import (
+    MarriageRecord,
+    MarriageRecordExportStatus,
+    MarriageRecordStatus,
+)
 
 
 class MarriageRecordRepository:
     """Create, read, update, and delete marriage records in SQLite."""
 
     _COLUMNS = """
-        id, year, number, display_number, status, created_at, modified_at,
+        id, year, number, display_number, status, export_status, created_at, modified_at,
         husb_person_id, wife_person_id, marriage_date_raw, marriage_date_gedcom,
         marriage_place, note_origin_husband, note_origin_wife, note_death_husband,
         note_death_wife, note_legitimation, note_marginal, note_comments
@@ -26,13 +30,13 @@ class MarriageRecordRepository:
         cursor = self._connection.execute(
             """
             INSERT INTO marriage_record (
-                year, number, display_number, status, created_at, modified_at,
+                year, number, display_number, status, export_status, created_at, modified_at,
                 husb_person_id, wife_person_id, marriage_date_raw,
                 marriage_date_gedcom, marriage_place, note_origin_husband,
                 note_origin_wife, note_death_husband, note_death_wife,
                 note_legitimation, note_marginal, note_comments
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             self._values(record),
         )
@@ -59,6 +63,7 @@ class MarriageRecordRepository:
             """
             UPDATE marriage_record
             SET year = ?, number = ?, display_number = ?, status = ?,
+                export_status = ?,
                 created_at = ?, modified_at = ?, husb_person_id = ?,
                 wife_person_id = ?, marriage_date_raw = ?,
                 marriage_date_gedcom = ?, marriage_place = ?,
@@ -86,6 +91,7 @@ class MarriageRecordRepository:
             record.number,
             record.display_number,
             record.status.value,
+            record.export_status.value,
             record.created_at.isoformat(),
             record.modified_at.isoformat(),
             record.husb_person_id,
@@ -110,6 +116,7 @@ class MarriageRecordRepository:
             number=row["number"],
             display_number=row["display_number"],
             status=MarriageRecordStatus(row["status"]),
+            export_status=MarriageRecordExportStatus(row["export_status"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             modified_at=datetime.fromisoformat(row["modified_at"]),
             husb_person_id=row["husb_person_id"],

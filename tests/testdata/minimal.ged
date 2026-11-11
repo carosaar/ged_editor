@@ -1,0 +1,21 @@
+0 HEAD
+1 SOUR GEDCOM
+2 VERS 5.5.1
+0 @I1@ INDI
+1 NAME Johann /Müller/
+1 SEX M
+1 NOTE This note is intentionally ignored.
+0 @I2@ INDI
+1 NAME Anna /Schmidt/
+1 SEX F
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I3@
+0 @F2@ FAM
+1 HUSB @I99@
+1 WIFE @I2@
+0 @S1@ SOUR
+1 TITL Heiratsregister Sulzbach
+1 NOTE This note is intentionally ignored.
+0 TRLR
