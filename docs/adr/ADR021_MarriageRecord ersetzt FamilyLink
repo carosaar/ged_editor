@@ -1,0 +1,293 @@
+# ADR-021: MarriageRecord ersetzt FamilyLink
+
+## Status
+
+Akzeptiert
+
+## Datum
+
+2026-11-11
+
+## Kontext
+
+In den frühen Architekturentwürfen wurden die Entitäten:
+
+```text
+MarriageRecord
+```
+
+und
+
+```text
+FamilyLink
+```
+
+parallel geführt.
+
+Die ursprüngliche Überlegung war:
+
+```text
+MarriageRecord
+    = Fachobjekt Urkunde
+
+FamilyLink
+    = GEDCOM-FAM-Datensatz
+```
+
+Mit den Entscheidungen aus ADR-001, ADR-017, ADR-018 und ADR-019 hat sich jedoch gezeigt, dass beide Entitäten dieselbe fachliche Beziehung beschreiben.
+
+Insbesondere wurde festgelegt:
+
+```text
+Urkunde ↔ FAM
+```
+
+als fachliche 1:1-Beziehung.
+
+Dadurch entstand eine nahezu vollständige Redundanz beider Entitäten.
+
+---
+
+## Entscheidung
+
+Die Entität:
+
+```text
+FamilyLink
+```
+
+wird aus dem Datenmodell entfernt.
+
+Die Entität:
+
+```text
+MarriageRecord
+```
+
+übernimmt vollständig die Rolle des GEDCOM-FAM-Datensatzes.
+
+---
+
+## Begriffsklärung
+
+Der Begriff
+
+```text
+FAM-Datensatz
+```
+
+bleibt weiterhin Bestandteil der Dokumentation und der übrigen ADRs.
+
+Er bezeichnet ausschließlich die GEDCOM-Repräsentation einer Eheschließung.
+
+Ein FAM-Datensatz ist künftig keine eigenständige Projektentität mehr.
+
+Er wird vollständig durch einen MarriageRecord repräsentiert.
+
+---
+
+## Begründung
+
+MarriageRecord enthält bereits alle fachlich relevanten Informationen:
+
+```text
+gedcom_xref
+
+husb_person_id
+wife_person_id
+
+marriage_date_raw
+marriage_date_gedcom
+marriage_place
+
+workflow_status
+export_status
+
+Urkundennummer
+Jahrgang
+
+Notizfelder
+```
+
+Für den Export eines GEDCOM-FAM-Datensatzes werden keine zusätzlichen Informationen aus einer separaten FamilyLink-Entität benötigt.
+
+Die Pflege zweier nahezu identischer Entitäten würde lediglich zu Redundanzen und zusätzlichen Synchronisationsproblemen führen.
+
+---
+
+## Gedcom-XREF
+
+Der FAM-XREF wird direkt im MarriageRecord gespeichert.
+
+```text
+MarriageRecord.gedcom_xref
+```
+
+---
+
+### Bestehende Datensätze
+
+Wurde die Urkunde aus einer GEDCOM-Datei importiert, enthält das Feld den vorhandenen FAM-XREF.
+
+Beispiel:
+
+```text
+@F471@
+```
+
+---
+
+### Neue Urkunden
+
+Bei neu erfassten Urkunden ist zunächst kein FAM-XREF vorhanden.
+
+Beispiel:
+
+```text
+gedcom_xref = NULL
+```
+
+Der FAM-XREF wird erst im Exportprozess gemäß ADR-018 erzeugt.
+
+---
+
+## Konsequenzen
+
+### Datenmodell
+
+Entfernen:
+
+```text
+FamilyLink
+```
+
+---
+
+### Datenbank
+
+Entfernen:
+
+```text
+family_link
+```
+
+---
+
+### Repository-Schicht
+
+Entfernen:
+
+```text
+FamilyRepository
+```
+
+---
+
+### Service-Schicht
+
+Entfernen:
+
+```text
+FamilyService
+```
+
+---
+
+### Import
+
+Beim GEDCOM-Import werden vorhandene FAM-XREFs unmittelbar dem MarriageRecord zugeordnet.
+
+---
+
+### Export
+
+GEDCOM-FAM-Strukturen werden direkt aus MarriageRecord erzeugt oder aktualisiert.
+
+---
+
+### Konfliktprüfung
+
+Konfliktprüfungen gemäß ADR-017 erfolgen unmittelbar auf MarriageRecord.
+
+Eine zusätzliche FamilyLink-Abstraktion entfällt.
+
+---
+
+## Architekturprinzip
+
+Für ged_editor gilt:
+
+> Ein MarriageRecord repräsentiert sowohl die fachliche Urkunde als auch den zugehörigen GEDCOM-FAM-Datensatz.
+
+Es existiert keine separate fachliche oder technische Entität für Familiendatensätze.
+
+---
+
+## Auswirkungen auf bestehende ADRs
+
+### ADR-001
+
+Wird präzisiert.
+
+Die Urkunde bleibt das führende Fachobjekt.
+
+---
+
+### ADR-017
+
+Die dort beschriebene 1:1-Beziehung zwischen Urkunde und FAM bleibt bestehen.
+
+Der Begriff „FAM-Datensatz“ bezeichnet die GEDCOM-Darstellung eines MarriageRecord.
+
+---
+
+### ADR-018
+
+Beim Export werden GEDCOM-FAM-Datensätze direkt aus MarriageRecord erzeugt oder aktualisiert.
+
+Eine eigenständige Entität FamilyLink existiert nicht.
+
+---
+
+### ADR-019
+
+Der Schreibschutz exportierter FAM-Datensätze bezieht sich auf den exportierten MarriageRecord.
+
+---
+
+## Auswirkungen auf DATA_MODEL
+
+Die Entität:
+
+```text
+FamilyLink
+```
+
+entfällt vollständig.
+
+Die Beziehung:
+
+```text
+MarriageRecord
+    ↔
+FamilyLink
+```
+
+wird ersetzt durch:
+
+```text
+MarriageRecord
+    ↔
+GEDCOM-FAM
+```
+
+als reine Exportbeziehung.
+
+---
+
+## Verwandte ADRs
+
+- ADR-001 Urkunde als führendes Fachobjekt
+- ADR-017 Konflikterkennung und selektiver Export
+- ADR-018 Exportmodell und GEDCOM-Erzeugung
+- ADR-019 Exportstatus, Sperrlogik und Wiederholungsexporte
