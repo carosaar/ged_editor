@@ -9,8 +9,6 @@
 ### Hinzugefügt
 
 - Exportstatus für Urkunden gemäß ADR-017 eingeführt.
-- `needs_export` und `source_snapshot` für Personen ergänzt.
-- `source_snapshot` für Familien ergänzt.
 - Vorbereitung der späteren Konflikterkennung zwischen Projekt- und GEDCOM-Stand.
 
 ### Geändert
