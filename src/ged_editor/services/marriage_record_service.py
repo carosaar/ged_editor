@@ -25,6 +25,24 @@ class MarriageRecordService:
         """Read a marriage record by primary key."""
         return self._repository.get_by_id(record_id)
 
+    def list_all(self) -> list[MarriageRecord]:
+        """List records in registration order."""
+        return self._repository.list_all()
+
+    def has_spouse_pair(
+        self,
+        husb_person_id: int,
+        wife_person_id: int,
+        *,
+        excluding_record_id: int | None = None,
+    ) -> bool:
+        """Check for an existing record with the same husband and wife."""
+        return self._repository.has_spouse_pair(
+            husb_person_id,
+            wife_person_id,
+            excluding_record_id=excluding_record_id,
+        )
+
     def update(self, record: MarriageRecord) -> MarriageRecord | None:
         """Persist updates to a marriage record."""
         with self._connection:

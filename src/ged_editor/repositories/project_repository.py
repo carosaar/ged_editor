@@ -61,6 +61,14 @@ class ProjectRepository:
         ).fetchone()
         return self._project_from_row(row) if row is not None else None
 
+    def get_meta_value(self, key: str) -> str | None:
+        """Return a project setting stored in meta, or None when absent."""
+        row = self._connection.execute(
+            'SELECT "value" FROM meta WHERE "key" = ?',
+            (key,),
+        ).fetchone()
+        return row["value"] if row is not None else None
+
     def update_project(self, project: Project) -> Project | None:
         """Update persisted project metadata and return the stored row."""
         if project.id is None:

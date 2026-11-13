@@ -61,6 +61,37 @@ class PersonRepository:
         ).fetchone()
         return self._person_from_row(row) if row is not None else None
 
+    def search(
+        self,
+        name_fragment: str = "",
+        *,
+        sex: str | None = None,
+    ) -> list[Person]:
+        """Find people by name and, optionally, sex."""
+        select = """
+            SELECT id, gedcom_xref, name, sex, created_at, modified_at,
+                   source_snapshot, birth_date_raw, birth_date_gedcom,
+                   birth_place, death_date_raw, death_date_gedcom, death_place
+            FROM person
+        """
+        conditions: list[str] = []
+        parameters: list[str] = []
+        search_text = name_fragment.strip()
+        if search_text:
+            conditions.append("name LIKE ? COLLATE NOCASE")
+            parameters.append(f"%{search_text}%")
+        if sex is not None:
+            conditions.append("sex = ?")
+            parameters.append(sex)
+        query = select
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        rows = self._connection.execute(
+            query + " ORDER BY name COLLATE NOCASE, id",
+            parameters,
+        ).fetchall()
+        return [self._person_from_row(row) for row in rows]
+
     def get_by_xref(self, gedcom_xref: str | None) -> Person | None:
         """Return a person by GEDCOM XREF, or None when no XREF is supplied."""
         if gedcom_xref is None:

@@ -57,6 +57,36 @@ class MarriageRecordRepository:
         ).fetchone()
         return self._record_from_row(row) if row is not None else None
 
+    def list_all(self) -> list[MarriageRecord]:
+        """Return all records ordered by year and registration number."""
+        rows = self._connection.execute(
+            f"""
+            SELECT {self._COLUMNS}
+            FROM marriage_record
+            ORDER BY year IS NULL, year, number IS NULL, number, id
+            """
+        ).fetchall()
+        return [self._record_from_row(row) for row in rows]
+
+    def has_spouse_pair(
+        self,
+        husb_person_id: int,
+        wife_person_id: int,
+        *,
+        excluding_record_id: int | None = None,
+    ) -> bool:
+        """Return whether another record already uses this spouse pair."""
+        query = """
+            SELECT 1
+            FROM marriage_record
+            WHERE husb_person_id = ? AND wife_person_id = ?
+        """
+        parameters: tuple[object, ...] = (husb_person_id, wife_person_id)
+        if excluding_record_id is not None:
+            query += " AND id != ?"
+            parameters += (excluding_record_id,)
+        return self._connection.execute(query + " LIMIT 1", parameters).fetchone() is not None
+
     def get_by_xref(self, gedcom_xref: str | None) -> MarriageRecord | None:
         """Return a marriage record by GEDCOM XREF, or None when absent."""
         if gedcom_xref is None:

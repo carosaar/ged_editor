@@ -1,6 +1,5 @@
 """Regression tests for the active architecture and persisted project model."""
 
-import shutil
 import sqlite3
 from dataclasses import fields
 from pathlib import Path
@@ -18,8 +17,6 @@ from ged_editor.models import (
 from ged_editor.services.project_service import ProjectService
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
-_V4_SAMPLE = _PROJECT_ROOT / "sample_projects" / "meinErstesProjekt.edg"
-
 
 def test_workflow_status_enum_matches_adr_015() -> None:
     assert {status.value for status in MarriageRecordStatus} == {
@@ -180,15 +177,65 @@ def test_person_model_has_no_export_or_existing_record_flags() -> None:
 
 
 def test_schema_v4_project_migrates_to_current_architecture(tmp_path) -> None:
-    assert _V4_SAMPLE.is_file()
-    with sqlite3.connect(_V4_SAMPLE) as source:
-        version = source.execute(
-            'SELECT "value" FROM meta WHERE "key" = "schema_version"'
-        ).fetchone()
-    assert version == ("4",)
-
     project_path = tmp_path / "migrated-v4.edg"
-    shutil.copy2(_V4_SAMPLE, project_path)
+    creator = ProjectService()
+    assert creator.create_new_project(project_path, "Schema v4").succeeded
+    creator.close_project()
+
+    now = "2026-11-13T00:00:00"
+    with sqlite3.connect(project_path) as connection:
+        person_id = connection.execute(
+            """
+            INSERT INTO person (name, sex, created_at, modified_at)
+            VALUES ('Max Beispiel', 'M', ?, ?)
+            """,
+            (now, now),
+        ).lastrowid
+        connection.execute(
+            "ALTER TABLE person ADD COLUMN is_existing_record INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execute(
+            "ALTER TABLE person ADD COLUMN needs_export INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execute(
+            """
+            INSERT INTO marriage_record (
+                year, number, display_number, workflow_status, created_at,
+                modified_at, husb_person_id
+            ) VALUES (1901, 2, '2/1901', 'Fertig', ?, ?, ?)
+            """,
+            (now, now, person_id),
+        )
+        connection.execute(
+            """
+            CREATE TABLE family_link (
+                id INTEGER PRIMARY KEY,
+                gedcom_xref TEXT,
+                husb_person_id INTEGER,
+                wife_person_id INTEGER,
+                created_at TEXT NOT NULL,
+                modified_at TEXT NOT NULL,
+                source_snapshot TEXT
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO family_link (
+                id, gedcom_xref, husb_person_id, created_at, modified_at,
+                source_snapshot
+            ) VALUES (8, '@F8@', ?, ?, ?, '{}')
+            """,
+            (person_id, now, now),
+        )
+        connection.execute(
+            'UPDATE meta SET "value" = "4" WHERE "key" = "schema_version"'
+        )
+        connection.execute("UPDATE project SET schema_version = '4'")
+        assert connection.execute(
+            'SELECT "value" FROM meta WHERE "key" = "schema_version"'
+        ).fetchone() == ("4",)
+
     service = ProjectService()
     opened = service.open_project(project_path)
 
@@ -237,6 +284,8 @@ def test_schema_v4_project_migrates_to_current_architecture(tmp_path) -> None:
         "death_date_gedcom",
         "death_place",
     } <= person_columns
+    assert "is_existing_record" not in person_columns
+    assert "needs_export" not in person_columns
 
     meta_keys = {
         row["key"] for row in connection.execute('SELECT "key" FROM meta')
@@ -244,4 +293,7 @@ def test_schema_v4_project_migrates_to_current_architecture(tmp_path) -> None:
     assert PROJECT_META_DEFAULTS.keys() <= meta_keys
     assert connection.execute("SELECT COUNT(*) FROM person").fetchone()[0] > 0
     assert connection.execute("SELECT COUNT(*) FROM marriage_record").fetchone()[0] > 0
+    assert connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'family_link'"
+    ).fetchone() is None
     service.close_project()

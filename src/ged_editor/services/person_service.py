@@ -23,6 +23,15 @@ class PersonService:
         """Read a person by primary key."""
         return self._repository.get_by_id(person_id)
 
+    def search(
+        self,
+        name_fragment: str = "",
+        *,
+        sex: str | None = None,
+    ) -> list[Person]:
+        """Search project people by name and optional sex."""
+        return self._repository.search(name_fragment, sex=sex)
+
     def update(self, person: Person) -> Person | None:
         """Persist updates to a person."""
         with self._connection:

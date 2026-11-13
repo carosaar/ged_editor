@@ -1,11 +1,12 @@
 """Main application window."""
 
 from PySide6.QtGui import QAction, QCloseEvent
-from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox
+from PySide6.QtWidgets import QFileDialog, QLabel, QMainWindow, QMessageBox
 
 from ged_editor.app.constants import APP_NAME
 from ged_editor.services.gedcom_import_service import GEDCOMImportService
 from ged_editor.services.project_service import ProjectService
+from ged_editor.ui.views.entry_workspace import MarriageEntryWorkspace
 
 
 class MainWindow(QMainWindow):
@@ -18,10 +19,19 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(APP_NAME)
         self._save_project_action: QAction | None = None
         self._gedcom_import_action: QAction | None = None
+        self._entry_workspace: MarriageEntryWorkspace | None = None
+        self._file_menu = None
+        self._menu_bar = self.menuBar()
         self._create_file_menu()
+        self.setCentralWidget(QLabel("Öffnen oder erstellen Sie ein Projekt."))
+        if self._project_service.current_project is not None:
+            self._set_active_project_ui(
+                self._project_service.current_project.project_name
+            )
 
     def _create_file_menu(self) -> None:
-        file_menu = self.menuBar().addMenu("Datei")
+        file_menu = self._menu_bar.addMenu("Datei")
+        self._file_menu = file_menu
 
         new_project_action = QAction("Neu", self)
         new_project_action.triggered.connect(lambda: self._create_new_project())
@@ -117,6 +127,9 @@ class MainWindow(QMainWindow):
             self._save_project_action.setEnabled(True)
         if self._gedcom_import_action is not None:
             self._gedcom_import_action.setEnabled(True)
+        workspace = MarriageEntryWorkspace(self._project_service, self)
+        self._entry_workspace = workspace
+        self.setCentralWidget(workspace)
 
     def _import_gedcom(self) -> None:
         connection = self._project_service.connection
@@ -154,6 +167,8 @@ class MainWindow(QMainWindow):
         )
         if result.warnings:
             message += "\n\nHinweise:\n" + "\n".join(result.warnings)
+        if self._entry_workspace is not None:
+            self._entry_workspace.refresh_records()
         QMessageBox.information(self, "GEDCOM-Import", message)
 
     def closeEvent(self, event: QCloseEvent) -> None:

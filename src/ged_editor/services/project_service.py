@@ -55,6 +55,12 @@ class ProjectService:
             return None
         return self._database.connection
 
+    def get_meta_value(self, key: str) -> str | None:
+        """Read a project setting from the active project's meta table."""
+        if self._repository is None:
+            return None
+        return self._repository.get_meta_value(key)
+
     def create_new_project(
         self,
         project_path: str | Path,
