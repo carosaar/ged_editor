@@ -438,7 +438,14 @@ Für ged_editor gilt:
 - ADR-015 Workflowstatusmodell
 - ADR-016 Bildung von REFN, SOUR.PAGE und SOUR.NOTE
 
+# Ergänzungen 
+## 13.11.2026
+Zur Durchführung der Konfliktprüfung wird für relevante importierte INDI-
+und MarriageRecord-Datensätze ein source_snapshot gespeichert.
 
+Der Aufbau des Snapshots ist Implementierungsdetail.
+
+---
 ---
 
 # Entscheidungsmatrix Exportprüfung

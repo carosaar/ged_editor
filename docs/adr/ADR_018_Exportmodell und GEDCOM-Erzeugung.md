@@ -423,3 +423,11 @@ Für ged_editor gilt:
 > Vorhandene Quellen- und Referenzinformationen bleiben grundsätzlich erhalten.
 
 > Die Projektdaten bilden beim Export die fachlich maßgebliche Wahrheit.
+
+# Ergänzungen 
+## 13.11.2026
+Der Begriff FAM-Datensatz bezeichnet die GEDCOM-Repräsentation eines MarriageRecord.
+
+Eine eigenständige FamilyLink-Entität existiert nicht.
+
+---

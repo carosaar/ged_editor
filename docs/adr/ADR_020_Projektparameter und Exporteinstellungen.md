@@ -51,6 +51,7 @@ Eine Änderung wirkt sich auf alle zukünftigen Exporte aus.
 
 * marr_type
 * marr_plac
+* marriage_place_default
 
 * source_xref
 
