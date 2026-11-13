@@ -32,6 +32,7 @@ from ged_editor.models.marriage_record import (
 )
 from ged_editor.models.person import Person
 from ged_editor.repositories.marriage_record_repository import (
+    DuplicateMarriageRegistrationError,
     MarriageRecordRepository,
 )
 from ged_editor.repositories.person_repository import PersonRepository
@@ -324,10 +325,10 @@ class MarriageEntryWorkspace(QWidget):
         self.all_years_checkbox.toggled.connect(self._all_years_toggled)
         self.records_table.cellDoubleClicked.connect(self._open_record_at_row)
         self.year_edit.textChanged.connect(
-            lambda: self._handle_record_change(refresh_list=True)
+            lambda: self._handle_record_change()
         )
         self.number_edit.textChanged.connect(
-            lambda: self._handle_record_change(refresh_list=True)
+            lambda: self._handle_record_change()
         )
         self.marriage_place_edit.textChanged.connect(
             lambda: self._handle_record_change()
@@ -341,7 +342,6 @@ class MarriageEntryWorkspace(QWidget):
                     self._person_field_changed,
                     side,
                     "name",
-                    refresh_list=True,
                 )
             )
             widgets["birth_date"].textChanged.connect(
@@ -352,7 +352,6 @@ class MarriageEntryWorkspace(QWidget):
                     self._person_field_changed,
                     side,
                     "birth_place",
-                    refresh_list=True,
                 )
             )
             search_button, new_button = self._person_buttons[side]
@@ -509,6 +508,7 @@ class MarriageEntryWorkspace(QWidget):
     ) -> None:
         """Reset the form with latest-record defaults and optional spouses."""
         latest = self._latest_record()
+        last_place = self._last_used_marriage_place()
         self._loading = True
         self._record = None
         self._baseline_record = None
@@ -523,7 +523,9 @@ class MarriageEntryWorkspace(QWidget):
         )
         self.number_edit.clear()
         self.marriage_place_edit.setText(
-            self._project_service.get_meta_value("marriage_place_default") or ""
+            last_place
+            or self._project_service.get_meta_value("marriage_place_default")
+            or ""
         )
         self.marriage_date_edit.setText(
             ""
@@ -560,7 +562,7 @@ class MarriageEntryWorkspace(QWidget):
                 + "\n".join(errors.values()),
             )
             return False
-        if not self._persist_record(refresh_list=True):
+        if not self._persist_record():
             return False
         if self._record is None:
             return False
@@ -571,6 +573,9 @@ class MarriageEntryWorkspace(QWidget):
         )
         try:
             saved = self._marriages.update(updated)
+        except DuplicateMarriageRegistrationError as error:
+            self._show_duplicate_registration_error(error)
+            return False
         except sqlite3.Error as error:
             self._show_persistence_error(error)
             return False
@@ -602,6 +607,9 @@ class MarriageEntryWorkspace(QWidget):
         )
         try:
             saved = self._marriages.update(updated)
+        except DuplicateMarriageRegistrationError as error:
+            self._show_duplicate_registration_error(error)
+            return False
         except sqlite3.Error as error:
             self._show_persistence_error(error)
             return False
@@ -680,7 +688,22 @@ class MarriageEntryWorkspace(QWidget):
         records = self._marriages.list_all()
         if not records:
             return None
-        return max(records, key=lambda record: (record.created_at, record.id or 0))
+        return max(records, key=lambda record: (record.modified_at, record.id or 0))
+
+    def _last_used_marriage_place(self) -> str | None:
+        records = sorted(
+            self._marriages.list_all(),
+            key=lambda record: (record.modified_at, record.id or 0),
+            reverse=True,
+        )
+        return next(
+            (
+                record.marriage_place
+                for record in records
+                if record.marriage_place and record.marriage_place.strip()
+            ),
+            None,
+        )
 
     def _open_record_at_row(self, row: int, column: int) -> None:
         if not 0 <= column < self.records_table.columnCount():
@@ -694,17 +717,34 @@ class MarriageEntryWorkspace(QWidget):
         record = self._marriages.get_by_id(record_id)
         if record is not None:
             if record.year is None or record.number is None:
-                self.start_new_record(
-                    prefill_husband=self._persons_service.get_by_id(
-                        record.husb_person_id
-                    ),
-                    prefill_wife=self._persons_service.get_by_id(
-                        record.wife_person_id
-                    ),
-                    previous_selection_id=record.id,
-                )
+                self._open_incomplete_family_record(record)
             else:
                 self._load_record(record)
+
+    def _open_incomplete_family_record(self, record: MarriageRecord) -> None:
+        if (
+            record.export_status is not MarriageRecordExportStatus.EXPORTIERT
+            and record.workflow_status is not MarriageRecordStatus.IN_BEARBEITUNG
+        ):
+            updated = replace(
+                record,
+                workflow_status=MarriageRecordStatus.IN_BEARBEITUNG,
+                modified_at=datetime.now(),
+            )
+            try:
+                saved = self._marriages.update(updated)
+            except sqlite3.Error as error:
+                self._show_persistence_error(error)
+                return
+            if saved is None:
+                self._show_persistence_error(
+                    sqlite3.DatabaseError(
+                        "Die Urkunde konnte nicht gespeichert werden."
+                    )
+                )
+                return
+            record = saved
+        self._load_record(record)
 
     def _load_record(self, record: MarriageRecord) -> None:
         self._loading = True
@@ -786,7 +826,7 @@ class MarriageEntryWorkspace(QWidget):
             person = dialog.selected_person
             if person is not None:
                 self._load_person(side, person, editable=False)
-                self._handle_record_change(refresh_list=True)
+                self._handle_record_change()
                 self._update_existing_marriage_hint()
 
     def _create_person(self, side: str, checked: bool = False) -> None:
@@ -812,23 +852,16 @@ class MarriageEntryWorkspace(QWidget):
             self._created_person_ids.append(person.id)
         self._dirty = True
         self._load_person(side, person, editable=True)
-        self._handle_record_change(refresh_list=True)
+        self._handle_record_change()
         self._update_existing_marriage_hint()
         self._person_widgets[side]["name"].setFocus()
 
-    def _person_field_changed(
-        self,
-        side: str,
-        field_name: str,
-        value: str,
-        *,
-        refresh_list: bool = False,
-    ) -> None:
+    def _person_field_changed(self, side: str, field_name: str, value: str) -> None:
         if self._person_widgets[side][field_name].text() != value:
             return
-        self._person_changed(side, refresh_list=refresh_list)
+        self._person_changed(side)
 
-    def _person_changed(self, side: str, *, refresh_list: bool = False) -> None:
+    def _person_changed(self, side: str) -> None:
         if self._loading or not self._can_edit():
             return
         person = self._people[side]
@@ -854,13 +887,13 @@ class MarriageEntryWorkspace(QWidget):
             )
             return
         self._people[side] = saved_person
-        self._handle_record_change(refresh_list=refresh_list)
+        self._handle_record_change()
 
     def _date_changed(self) -> None:
         if self._loading:
             return
         self._update_date_display()
-        self._handle_record_change(refresh_list=True)
+        self._handle_record_change()
 
     def _update_date_display(self) -> None:
         value = parse_local_date(self.marriage_date_edit.text())
@@ -882,17 +915,17 @@ class MarriageEntryWorkspace(QWidget):
         self.marriage_date_error_label.hide()
         self._mark_invalid(self.marriage_date_edit, False)
 
-    def _handle_record_change(self, *, refresh_list: bool = False) -> None:
+    def _handle_record_change(self) -> None:
         if self._loading or not self._can_edit():
             return
         self._dirty = True
-        if not self._persist_record(refresh_list=refresh_list):
+        if not self._persist_record():
             return
         if self._validation_attempted:
             self._show_required_field_errors(self._required_field_errors())
         self._update_existing_marriage_hint()
 
-    def _persist_record(self, *, refresh_list: bool) -> bool:
+    def _persist_record(self) -> bool:
         record = self._build_record()
         try:
             if self._record is None:
@@ -907,11 +940,13 @@ class MarriageEntryWorkspace(QWidget):
                     )
                     return False
                 self._record = saved
+        except DuplicateMarriageRegistrationError as error:
+            self._show_duplicate_registration_error(error)
+            return False
         except sqlite3.Error as error:
             self._show_persistence_error(error)
             return False
-        if refresh_list:
-            self.refresh_records(self._record.id)
+        self.refresh_records(self._record.id)
         self.workflow_status_label.setText(self._record.workflow_status.value)
         self._set_record_controls()
         return True
@@ -1110,6 +1145,16 @@ class MarriageEntryWorkspace(QWidget):
             self,
             "Speichern fehlgeschlagen",
             f"Die Erfassungsdaten konnten nicht gespeichert werden:\n{error}",
+        )
+
+    def _show_duplicate_registration_error(
+        self,
+        error: DuplicateMarriageRegistrationError,
+    ) -> None:
+        QMessageBox.warning(
+            self,
+            "Registriernummer vergeben",
+            str(error),
         )
 
     def _show_cancel_error(self, error: sqlite3.Error) -> None:

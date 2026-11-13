@@ -29,6 +29,20 @@ class MarriageRecordService:
         """List records in registration order."""
         return self._repository.list_all()
 
+    def has_registration(
+        self,
+        year: int | None,
+        number: int | None,
+        *,
+        excluding_record_id: int | None = None,
+    ) -> bool:
+        """Check whether another record uses this year and number."""
+        return self._repository.has_registration(
+            year,
+            number,
+            excluding_record_id=excluding_record_id,
+        )
+
     def has_spouse_pair(
         self,
         husb_person_id: int,

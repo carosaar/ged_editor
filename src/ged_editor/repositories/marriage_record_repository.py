@@ -10,6 +10,17 @@ from ged_editor.models.marriage_record import (
 )
 
 
+class DuplicateMarriageRegistrationError(sqlite3.IntegrityError):
+    """Raised when a year and registration number are already in use."""
+
+    def __init__(self, year: int, number: int) -> None:
+        self.year = year
+        self.number = number
+        super().__init__(
+            f"Die Registriernummer {number}/{year} ist bereits vergeben."
+        )
+
+
 class MarriageRecordRepository:
     """Create, read, update, and delete marriage records in SQLite."""
 
@@ -28,6 +39,7 @@ class MarriageRecordRepository:
 
     def create(self, record: MarriageRecord) -> MarriageRecord:
         """Insert a marriage record and return the persisted record."""
+        self._ensure_unique_registration(record)
         cursor = self._connection.execute(
             """
             INSERT INTO marriage_record (
@@ -68,6 +80,30 @@ class MarriageRecordRepository:
         ).fetchall()
         return [self._record_from_row(row) for row in rows]
 
+    def has_registration(
+        self,
+        year: int | None,
+        number: int | None,
+        *,
+        excluding_record_id: int | None = None,
+    ) -> bool:
+        """Return whether another record already uses this registration."""
+        if year is None or number is None:
+            return False
+        query = """
+            SELECT 1
+            FROM marriage_record
+            WHERE year = ? AND number = ?
+        """
+        parameters: tuple[object, ...] = (year, number)
+        if excluding_record_id is not None:
+            query += " AND id != ?"
+            parameters += (excluding_record_id,)
+        return (
+            self._connection.execute(query + " LIMIT 1", parameters).fetchone()
+            is not None
+        )
+
     def has_spouse_pair(
         self,
         husb_person_id: int,
@@ -106,6 +142,14 @@ class MarriageRecordRepository:
         """Update a marriage record and return the persisted record."""
         if record.id is None:
             return None
+        current = self.get_by_id(record.id)
+        if current is None:
+            return None
+        if (current.year, current.number) != (record.year, record.number):
+            self._ensure_unique_registration(
+                record,
+                excluding_record_id=record.id,
+            )
         cursor = self._connection.execute(
             """
             UPDATE marriage_record
@@ -122,6 +166,23 @@ class MarriageRecordRepository:
             (*self._values(record), record.id),
         )
         return self.get_by_id(record.id) if cursor.rowcount == 1 else None
+
+    def _ensure_unique_registration(
+        self,
+        record: MarriageRecord,
+        *,
+        excluding_record_id: int | None = None,
+    ) -> None:
+        if self.has_registration(
+            record.year,
+            record.number,
+            excluding_record_id=excluding_record_id,
+        ):
+            if record.year is not None and record.number is not None:
+                raise DuplicateMarriageRegistrationError(
+                    record.year,
+                    record.number,
+                )
 
     def delete(self, record_id: int) -> bool:
         """Delete a marriage record by primary key and report whether it existed."""

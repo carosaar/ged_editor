@@ -22,6 +22,7 @@ from ged_editor.models import (
     Person,
 )
 from ged_editor.repositories.marriage_record_repository import (
+    DuplicateMarriageRegistrationError,
     MarriageRecordRepository,
 )
 from ged_editor.services.marriage_record_service import MarriageRecordService
@@ -163,6 +164,43 @@ def test_new_entry_uses_latest_record_and_project_place_default(tmp_path) -> Non
     assert workspace.marriage_place_edit.text() == "Sulzbach"
     assert workspace.number_edit.hasFocus()
     assert not workspace.marriage_place_edit.hasFocus()
+    project.close_project()
+
+
+def test_new_entry_prefers_last_used_nonempty_marriage_place(tmp_path) -> None:
+    _application()
+    project = _open_project(tmp_path)
+    connection = project.connection
+    assert connection is not None
+    connection.execute(
+        'UPDATE meta SET "value" = ? WHERE "key" = ?',
+        ("Projektstandard", "marriage_place_default"),
+    )
+    records = MarriageRecordService(connection)
+    now = datetime.now()
+    records.create(
+        _make_record(
+            year=1886,
+            number=10,
+            created_at=now - timedelta(days=2),
+            marriage_date_raw="01.01.1886",
+            marriage_place="Sulzbach",
+        )
+    )
+    records.create(
+        _make_record(
+            year=1887,
+            number=1,
+            created_at=now,
+            marriage_date_raw="01.01.1887",
+            marriage_place=None,
+        )
+    )
+
+    workspace = MarriageEntryWorkspace(project)
+
+    assert workspace.year_edit.text() == "1887"
+    assert workspace.marriage_place_edit.text() == "Sulzbach"
     project.close_project()
 
 
@@ -444,7 +482,7 @@ def test_existing_marriage_hint_is_informational_only(tmp_path) -> None:
     assert workspace._person_widgets["husband"]["birth_date"].text() == "01.01.1860"
     assert workspace._person_widgets["husband"]["birth_place"].text() == "Sulzbach"
     assert workspace._person_widgets["husband"]["sex"].text() == "M"
-    workspace._handle_record_change(refresh_list=True)
+    workspace._handle_record_change()
 
     table_names = {
         row[0]
@@ -665,6 +703,135 @@ def test_family_list_filters_by_marriage_date_not_registration_year(
     project.close_project()
 
 
+def test_registration_number_is_unique_and_duplicate_is_reported(tmp_path) -> None:
+    _application()
+    project = _open_project(tmp_path)
+    connection = project.connection
+    assert connection is not None
+    marriages = MarriageRecordService(connection)
+    existing = marriages.create(
+        _make_record(
+            year=1887,
+            number=15,
+            created_at=datetime.now(),
+            marriage_date_raw="01.01.1887",
+        )
+    )
+    second_record = marriages.create(
+        _make_record(
+            year=1887,
+            number=16,
+            created_at=datetime.now(),
+            marriage_date_raw="02.01.1887",
+        )
+    )
+    assert marriages.has_registration(1887, 15)
+    assert not marriages.has_registration(
+        1887,
+        15,
+        excluding_record_id=existing.id,
+    )
+    workspace = MarriageEntryWorkspace(project)
+    workspace._loading = True
+    workspace.year_edit.setText("1887")
+    workspace.number_edit.setText("15")
+    workspace._loading = False
+
+    with patch.object(QMessageBox, "warning") as warning:
+        assert not workspace._persist_record()
+    warning.assert_called_once_with(
+        workspace,
+        "Registriernummer vergeben",
+        "Die Registriernummer 15/1887 ist bereits vergeben.",
+    )
+    assert workspace._record is None
+    assert workspace.workflow_status_label.text() == "In Bearbeitung"
+    persisted = marriages.get_by_id(existing.id)
+    assert persisted is not None
+    assert persisted.workflow_status is MarriageRecordStatus.IN_BEARBEITUNG
+    with pytest.raises(DuplicateMarriageRegistrationError):
+        marriages.create(
+            _make_record(
+                year=1887,
+                number=15,
+                created_at=datetime.now(),
+            )
+        )
+    with pytest.raises(DuplicateMarriageRegistrationError):
+        marriages.update(replace(second_record, number=15))
+    unchanged = marriages.get_by_id(second_record.id)
+    assert unchanged is not None
+    assert unchanged.number == 16
+    assert marriages.update(existing) == existing
+    project.close_project()
+
+
+def test_completing_incomplete_family_updates_one_row_and_keeps_sort_order(
+    tmp_path,
+) -> None:
+    _application()
+    project = _open_project(tmp_path)
+    connection = project.connection
+    assert connection is not None
+    persons = PersonService(connection)
+    husband = persons.create(
+        Person(None, None, "Max", "M", datetime.now(), datetime.now())
+    )
+    wife = persons.create(
+        Person(None, None, "Eva", "F", datetime.now(), datetime.now())
+    )
+    another_husband = persons.create(
+        Person(None, None, "Paul", "M", datetime.now(), datetime.now())
+    )
+    another_wife = persons.create(
+        Person(None, None, "Anna", "F", datetime.now(), datetime.now())
+    )
+    marriages = MarriageRecordService(connection)
+    now = datetime.now()
+    family = marriages.create(
+        _make_record(
+            year=None,
+            number=None,
+            created_at=now - timedelta(days=1),
+            husb_person_id=husband.id,
+            wife_person_id=wife.id,
+            marriage_date_raw="02.01.1887",
+        )
+    )
+    other = marriages.create(
+        _make_record(
+            year=1887,
+            number=1,
+            created_at=now,
+            husb_person_id=another_husband.id,
+            wife_person_id=another_wife.id,
+            marriage_date_raw="02.01.1887",
+        )
+    )
+    workspace = MarriageEntryWorkspace(project)
+    family_row = next(
+        row
+        for row in range(workspace.records_table.rowCount())
+        if workspace.records_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        == family.id
+    )
+    workspace._open_record_at_row(family_row, 0)
+    assert workspace._record is not None
+    assert workspace._record.id == family.id
+    workspace.year_edit.setText("1887")
+    workspace.number_edit.setText("2")
+
+    assert workspace._record is not None
+    assert workspace._record.id == family.id
+    assert workspace._record.number == 2
+    assert workspace.records_table.rowCount() == 2
+    assert [
+        workspace.records_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        for row in range(workspace.records_table.rowCount())
+    ] == [other.id, family.id]
+    project.close_project()
+
+
 @pytest.mark.parametrize(
     ("column", "ascending_ids"),
     [
@@ -824,7 +991,8 @@ def test_double_click_loads_complete_record_and_starts_new_for_incomplete_family
         == incomplete.id
     )
     workspace._open_record_at_row(incomplete_row, 0)
-    assert workspace._record is None
+    assert workspace._record is not None
+    assert workspace._record.id == incomplete.id
     assert workspace._people["husband"] == husband
     assert workspace._people["wife"] == wife
     assert workspace.workflow_status_label.text() == "In Bearbeitung"
