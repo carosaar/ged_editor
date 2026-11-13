@@ -1,9 +1,8 @@
 # Changelog
 
 
-## 0.4.2
 
-# v0.4.2 – Architekturkonsolidierung und ADR\-Konformität
+## v0.4.2 – Architekturkonsolidierung und ADR\-Konformität
 
 ## Datenmodell
 
