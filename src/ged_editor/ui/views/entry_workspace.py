@@ -41,6 +41,7 @@ from ged_editor.services.project_service import ProjectService
 from ged_editor.ui.dialogs.person_search_dialog import PersonSearchDialog
 from ged_editor.utils.marriage_dates import (
     local_date_for_display,
+    marriage_date_years,
     parse_local_date,
     step_local_date,
     to_gedcom_date,
@@ -103,6 +104,9 @@ class MarriageEntryWorkspace(QWidget):
         self._dirty = False
         self._created_person_ids: list[int] = []
         self._previous_selection_id: int | None = None
+        self._sort_column = 4
+        self._sort_order = Qt.SortOrder.AscendingOrder
+        self._last_clicked_sort_column: int | None = None
         self._existing_marriage_hint = QLabel(
             "Diese Ehe ist bereits im Projekt vorhanden."
         )
@@ -127,10 +131,18 @@ class MarriageEntryWorkspace(QWidget):
         self.all_years_checkbox = QCheckBox("Alle Jahrgänge anzeigen")
         self.all_years_checkbox.setObjectName("all_years_checkbox")
         left_layout.addWidget(self.all_years_checkbox)
-        self.records_table = QTableWidget(0, 5)
+        self.records_table = QTableWidget(0, 7)
         self.records_table.setObjectName("marriage_records_table")
         self.records_table.setHorizontalHeaderLabels(
-            ("Jahrgang", "Nummer", "Ehemann", "Ehefrau", "Heiratsdatum")
+            (
+                "Jahrgang",
+                "Nummer",
+                "Ehemann",
+                "Ehefrau",
+                "Heiratsdatum",
+                "Workflowstatus",
+                "Exportstatus",
+            )
         )
         self.records_table.setSelectionBehavior(
             QTableWidget.SelectionBehavior.SelectRows
@@ -141,7 +153,14 @@ class MarriageEntryWorkspace(QWidget):
         self.records_table.setEditTriggers(
             QTableWidget.EditTrigger.NoEditTriggers
         )
-        self.records_table.horizontalHeader().setStretchLastSection(True)
+        header = self.records_table.horizontalHeader()
+        header.setStretchLastSection(True)
+        header.setSortIndicatorShown(True)
+        header.setSortIndicator(
+            self._sort_column,
+            self._sort_order,
+        )
+        header.sectionClicked.connect(self._sort_by_column)
         left_layout.addWidget(self.records_table)
         splitter.addWidget(left_panel)
 
@@ -349,17 +368,32 @@ class MarriageEntryWorkspace(QWidget):
         return QRegularExpressionValidator(QRegularExpression("[0-9]*"))
 
     def refresh_records(self, select_record_id: int | None = None) -> None:
-        """Reload the year-filtered certificate list in date/number order."""
+        """Reload records filtered by marriage year and using the active sort."""
         records = self._marriages.list_all()
         current_year = self._parse_integer(self.year_edit.text())
         if not self.all_years_checkbox.isChecked() and current_year is not None:
-            records = [record for record in records if record.year == current_year]
-        records.sort(key=self._record_sort_key)
+            records = [
+                record
+                for record in records
+                if current_year
+                in marriage_date_years(
+                    record.marriage_date_raw,
+                    record.marriage_date_gedcom,
+                )
+            ]
         people = {
             person.id: person
             for person in self._persons_service.search()
             if person.id is not None
         }
+        records.sort(
+            key=lambda record: self._record_sort_key(
+                record,
+                self._sort_column,
+                people,
+            ),
+            reverse=self._sort_order is Qt.SortOrder.DescendingOrder,
+        )
         self.records_table.setRowCount(len(records))
         selected_row = -1
         for row, record in enumerate(records):
@@ -374,6 +408,8 @@ class MarriageEntryWorkspace(QWidget):
                     record.marriage_date_raw,
                     record.marriage_date_gedcom,
                 ),
+                record.workflow_status.value,
+                record.export_status.value,
             )
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
@@ -387,7 +423,32 @@ class MarriageEntryWorkspace(QWidget):
             self.records_table.clearSelection()
 
     @staticmethod
-    def _record_sort_key(record: MarriageRecord) -> tuple[bool, date, bool, int, int]:
+    def _record_sort_key(
+        record: MarriageRecord,
+        column: int,
+        people: dict[int, Person],
+    ) -> tuple[object, ...]:
+        record_id = 0 if record.id is None else record.id
+        husband = people.get(record.husb_person_id)
+        wife = people.get(record.wife_person_id)
+        if column == 0:
+            return (record.year is None, record.year or 0, record.number or 0, record_id)
+        if column == 1:
+            return (record.number is None, record.number or 0, record.year or 0, record_id)
+        if column == 2:
+            return (
+                "" if husband is None else husband.name.casefold(),
+                record_id,
+            )
+        if column == 3:
+            return (
+                "" if wife is None else wife.name.casefold(),
+                record_id,
+            )
+        if column == 5:
+            return (record.workflow_status.value.casefold(), record_id)
+        if column == 6:
+            return (record.export_status.value.casefold(), record_id)
         date_text = local_date_for_display(
             record.marriage_date_raw,
             record.marriage_date_gedcom,
@@ -398,8 +459,23 @@ class MarriageEntryWorkspace(QWidget):
             date.max if parsed_date is None else parsed_date,
             record.number is None,
             0 if record.number is None else record.number,
-            0 if record.id is None else record.id,
+            record_id,
         )
+
+    def _sort_by_column(self, column: int) -> None:
+        if self._last_clicked_sort_column == column:
+            order = (
+                Qt.SortOrder.DescendingOrder
+                if self._sort_order is Qt.SortOrder.AscendingOrder
+                else Qt.SortOrder.AscendingOrder
+            )
+        else:
+            order = Qt.SortOrder.AscendingOrder
+        self._last_clicked_sort_column = column
+        self._sort_column = column
+        self._sort_order = order
+        self.records_table.horizontalHeader().setSortIndicator(column, order)
+        self.refresh_records(self._selected_record_id())
 
     def _all_years_toggled(self, checked: bool) -> None:
         del checked

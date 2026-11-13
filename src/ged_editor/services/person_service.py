@@ -29,7 +29,7 @@ class PersonService:
         *,
         sex: str | None = None,
     ) -> list[Person]:
-        """Search project people by name and optional sex."""
+        """Search person details with all terms and an optional sex filter."""
         return self._repository.search(name_fragment, sex=sex)
 
     def update(self, person: Person) -> Person | None:

@@ -2,6 +2,7 @@ from dataclasses import replace
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
+import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import (
@@ -251,6 +252,91 @@ def test_person_search_and_spouse_pair_check_use_existing_records(tmp_path) -> N
     database.close()
 
 
+def test_person_search_matches_all_terms_across_name_date_and_place(tmp_path) -> None:
+    database = DatabaseConnection(tmp_path / "multi-search.edg")
+    connection = database.connect(create=True)
+    database.initialize_schema()
+    people = PersonService(connection)
+    target = people.create(
+        Person(
+            None,
+            None,
+            "Horst Müller",
+            "M",
+            datetime.now(),
+            datetime.now(),
+            birth_date_raw="06.05.1878",
+            birth_place="Hamburg",
+        )
+    )
+    people.create(
+        Person(
+            None,
+            None,
+            "Hugo Müller",
+            "M",
+            datetime.now(),
+            datetime.now(),
+            birth_date_raw="06.05.1879",
+            birth_place="Berlin",
+        )
+    )
+
+    assert [person.name for person in people.search("mÜll")] == [
+        "Horst Müller",
+        "Hugo Müller",
+    ]
+    assert [person.id for person in people.search("Mü ho 78", sex="M")] == [
+        target.id
+    ]
+    assert [person.name for person in people.search("187")] == [
+        "Horst Müller",
+        "Hugo Müller",
+    ]
+    assert [person.id for person in people.search("hamb")] == [target.id]
+    assert people.search("Mü Paris") == []
+    database.close()
+
+
+def test_person_search_keeps_husband_and_wife_context_filters(tmp_path) -> None:
+    database = DatabaseConnection(tmp_path / "sex-search.edg")
+    connection = database.connect(create=True)
+    database.initialize_schema()
+    people = PersonService(connection)
+    husband = people.create(
+        Person(
+            None,
+            None,
+            "Horst Müller",
+            "M",
+            datetime.now(),
+            datetime.now(),
+            birth_date_raw="06.05.1878",
+            birth_place="Hamburg",
+        )
+    )
+    wife = people.create(
+        Person(
+            None,
+            None,
+            "Hortense Müller",
+            "F",
+            datetime.now(),
+            datetime.now(),
+            birth_date_raw="06.05.1878",
+            birth_place="Hamburg",
+        )
+    )
+
+    assert [person.id for person in people.search("Mü ho 78", sex="M")] == [
+        husband.id
+    ]
+    assert [person.id for person in people.search("Mü ho 78", sex="F")] == [
+        wife.id
+    ]
+    database.close()
+
+
 def test_invalid_date_is_marked_and_cannot_finish_record(tmp_path) -> None:
     _application()
     project = _open_project(tmp_path)
@@ -390,6 +476,7 @@ def test_cancel_discards_record_edits_and_restores_selection(tmp_path) -> None:
             number=1,
             created_at=datetime.now(),
             marriage_place="Sulzbach",
+            marriage_date_raw="01.01.1887",
         )
     )
     workspace = MarriageEntryWorkspace(project)
@@ -475,7 +562,7 @@ def test_person_search_dialog_filters_by_required_sex(tmp_path) -> None:
     project.close_project()
 
 
-def test_family_list_filters_current_year_and_sorts_by_date_then_number(
+def test_family_list_filters_marriage_date_year_and_sorts_by_date_then_number(
     tmp_path,
 ) -> None:
     application = _application()
@@ -529,6 +616,163 @@ def test_family_list_filters_current_year_and_sorts_by_date_then_number(
     project.close_project()
 
 
+def test_family_list_filters_by_marriage_date_not_registration_year(
+    tmp_path,
+) -> None:
+    _application()
+    project = _open_project(tmp_path)
+    connection = project.connection
+    assert connection is not None
+    records = MarriageRecordService(connection)
+    now = datetime.now()
+    marriage_in_context = records.create(
+        _make_record(
+            year=1886,
+            number=4,
+            created_at=now - timedelta(days=2),
+            marriage_date_raw="12.05.1887",
+        )
+    )
+    gedcom_date_in_context = records.create(
+        _make_record(
+            year=1887,
+            number=8,
+            created_at=now - timedelta(days=1),
+            marriage_date_gedcom="1 JAN 1887",
+        )
+    )
+    marriage_out_of_context = records.create(
+        _make_record(
+            year=1887,
+            number=9,
+            created_at=now,
+            marriage_date_raw="01.01.1888",
+        )
+    )
+    workspace = MarriageEntryWorkspace(project)
+
+    assert workspace.year_edit.text() == "1887"
+    assert [
+        workspace.records_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        for row in range(workspace.records_table.rowCount())
+    ] == [marriage_in_context.id, gedcom_date_in_context.id]
+    workspace.all_years_checkbox.setChecked(True)
+    assert workspace.records_table.rowCount() == 3
+    assert marriage_out_of_context.id in [
+        workspace.records_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        for row in range(workspace.records_table.rowCount())
+    ]
+    project.close_project()
+
+
+@pytest.mark.parametrize(
+    ("column", "ascending_ids"),
+    [
+        (0, (3, 2, 1)),
+        (1, (3, 1, 2)),
+        (2, (2, 3, 1)),
+        (3, (1, 3, 2)),
+        (4, (2, 1, 3)),
+        (5, (2, 3, 1)),
+        (6, (2, 3, 1)),
+    ],
+)
+def test_family_table_headers_sort_each_column_and_toggle_order(
+    tmp_path,
+    column: int,
+    ascending_ids: tuple[int, ...],
+) -> None:
+    _application()
+    project = _open_project(tmp_path)
+    connection = project.connection
+    assert connection is not None
+    persons = PersonService(connection)
+    zed = persons.create(
+        Person(None, None, "Zed", "M", datetime.now(), datetime.now())
+    )
+    anna = persons.create(
+        Person(None, None, "Anna", "M", datetime.now(), datetime.now())
+    )
+    berta = persons.create(
+        Person(None, None, "Berta", "F", datetime.now(), datetime.now())
+    )
+    yvonne = persons.create(
+        Person(None, None, "Yvonne", "F", datetime.now(), datetime.now())
+    )
+    marriages = MarriageRecordService(connection)
+    now = datetime.now()
+    marriages.create(
+        _make_record(
+            year=1888,
+            number=2,
+            created_at=now - timedelta(days=2),
+            husb_person_id=zed.id,
+            wife_person_id=berta.id,
+            marriage_date_raw="02.01.1887",
+        )
+    )
+    marriages.create(
+        replace(
+            _make_record(
+                year=1887,
+                number=10,
+                created_at=now - timedelta(days=1),
+                husb_person_id=anna.id,
+                wife_person_id=yvonne.id,
+                marriage_date_raw="01.01.1887",
+            ),
+            workflow_status=MarriageRecordStatus.FERTIG,
+            export_status=MarriageRecordExportStatus.EXPORTIERT,
+        )
+    )
+    marriages.create(
+        replace(
+            _make_record(
+                year=1887,
+                number=1,
+                created_at=now,
+                husb_person_id=anna.id,
+                wife_person_id=berta.id,
+                marriage_date_raw="03.01.1887",
+            ),
+            workflow_status=MarriageRecordStatus.FERTIG,
+            export_status=MarriageRecordExportStatus.KONFLIKT,
+        )
+    )
+    workspace = MarriageEntryWorkspace(project)
+    header = workspace.records_table.horizontalHeader()
+    header.sectionClicked.emit(column)
+    ascending = tuple(
+        workspace.records_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        for row in range(workspace.records_table.rowCount())
+    )
+    assert ascending == ascending_ids
+    assert header.sortIndicatorSection() == column
+    assert header.sortIndicatorOrder() is Qt.SortOrder.AscendingOrder
+
+    header.sectionClicked.emit(column)
+    descending = tuple(
+        workspace.records_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        for row in range(workspace.records_table.rowCount())
+    )
+    assert descending == tuple(reversed(ascending_ids))
+    assert header.sortIndicatorOrder() is Qt.SortOrder.DescendingOrder
+
+    header.sectionClicked.emit(column)
+    ascending_again = tuple(
+        workspace.records_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        for row in range(workspace.records_table.rowCount())
+    )
+    assert ascending_again == ascending_ids
+
+    other_column = (column + 1) % 7
+    header.sectionClicked.emit(other_column)
+    assert header.sortIndicatorOrder() is Qt.SortOrder.AscendingOrder
+    header.sectionClicked.emit(column)
+    assert header.sortIndicatorOrder() is Qt.SortOrder.AscendingOrder
+    project.close_project()
+
+
 def test_double_click_loads_complete_record_and_starts_new_for_incomplete_family(
     tmp_path,
 ) -> None:
@@ -554,7 +798,12 @@ def test_double_click_loads_complete_record_and_starts_new_for_incomplete_family
         )
     )
     complete = marriages.create(
-        _make_record(year=1887, number=2, created_at=datetime.now())
+        _make_record(
+            year=1887,
+            number=2,
+            created_at=datetime.now(),
+            marriage_date_raw="01.01.1887",
+        )
     )
     workspace = MarriageEntryWorkspace(project)
 

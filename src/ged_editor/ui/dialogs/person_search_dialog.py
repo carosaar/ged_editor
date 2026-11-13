@@ -32,7 +32,9 @@ class PersonSearchDialog(QDialog):
         self.resize(480, 360)
 
         self._search_edit = QLineEdit()
-        self._search_edit.setPlaceholderText("Name suchen")
+        self._search_edit.setPlaceholderText(
+            "Name, Geburtsdatum oder Geburtsort suchen"
+        )
         self._people_list = QListWidget()
         self._empty_label = QLabel("Keine Personen gefunden.")
         self._empty_label.hide()

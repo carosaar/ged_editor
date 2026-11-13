@@ -6,6 +6,7 @@ from datetime import date, timedelta
 
 _LOCAL_DATE_PATTERN = re.compile(r"\d{2}\.\d{2}\.\d{4}\Z")
 _GEDCOM_DATE_PATTERN = re.compile(r"(\d{1,2}) ([A-Z]{3}) (\d{4})\Z", re.IGNORECASE)
+_YEAR_PATTERN = re.compile(r"(?<!\d)(\d{4})(?!\d)")
 _GEDCOM_MONTHS = (
     "JAN",
     "FEB",
@@ -36,6 +37,18 @@ def parse_local_date(value: str) -> date | None:
 def to_gedcom_date(value: date) -> str:
     """Format a date using the GEDCOM day-month-year representation."""
     return f"{value.day} {_GEDCOM_MONTHS[value.month - 1]} {value.year:04d}"
+
+
+def marriage_date_years(
+    raw_value: str | None,
+    gedcom_value: str | None,
+) -> frozenset[int]:
+    """Return the year or years represented in a raw or GEDCOM marriage date."""
+    local_date = parse_local_date(raw_value or "")
+    if local_date is not None:
+        return frozenset({local_date.year})
+    date_text = gedcom_value or raw_value or ""
+    return frozenset(int(year) for year in _YEAR_PATTERN.findall(date_text))
 
 
 def _format_local_date(value: date) -> str:

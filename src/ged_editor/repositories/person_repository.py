@@ -67,7 +67,7 @@ class PersonRepository:
         *,
         sex: str | None = None,
     ) -> list[Person]:
-        """Find people by name and, optionally, sex."""
+        """Match all search terms across person details, optionally filtered by sex."""
         select = """
             SELECT id, gedcom_xref, name, sex, created_at, modified_at,
                    source_snapshot, birth_date_raw, birth_date_gedcom,
@@ -76,10 +76,6 @@ class PersonRepository:
         """
         conditions: list[str] = []
         parameters: list[str] = []
-        search_text = name_fragment.strip()
-        if search_text:
-            conditions.append("name LIKE ? COLLATE NOCASE")
-            parameters.append(f"%{search_text}%")
         if sex is not None:
             conditions.append("sex = ?")
             parameters.append(sex)
@@ -90,7 +86,25 @@ class PersonRepository:
             query + " ORDER BY name COLLATE NOCASE, id",
             parameters,
         ).fetchall()
-        return [self._person_from_row(row) for row in rows]
+        people = [self._person_from_row(row) for row in rows]
+        terms = tuple(term.casefold() for term in name_fragment.split())
+        if not terms:
+            return people
+        return [
+            person
+            for person in people
+            if all(
+                any(
+                    term in value.casefold()
+                    for value in (
+                        person.name,
+                        person.birth_date_raw or "",
+                        person.birth_place or "",
+                    )
+                )
+                for term in terms
+            )
+        ]
 
     def get_by_xref(self, gedcom_xref: str | None) -> Person | None:
         """Return a person by GEDCOM XREF, or None when no XREF is supplied."""
