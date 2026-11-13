@@ -8,10 +8,8 @@ from enum import StrEnum
 class MarriageRecordStatus(StrEnum):
     """Workflow statuses defined by ADR-015."""
 
-    NEU = "Neu"
     IN_BEARBEITUNG = "In Bearbeitung"
     FERTIG = "Fertig"
-    GEPRUEFT = "Geprüft"
 
 
 class MarriageRecordExportStatus(StrEnum):
@@ -27,10 +25,10 @@ class MarriageRecord:
     """Marriage certificate record, the leading domain object."""
 
     id: int | None
-    year: int
-    number: int
+    year: int | None
+    number: int | None
     display_number: str
-    status: MarriageRecordStatus
+    workflow_status: MarriageRecordStatus
     created_at: datetime
     modified_at: datetime
     husb_person_id: int | None
@@ -45,6 +43,8 @@ class MarriageRecord:
     note_legitimation: str | None
     note_marginal: str | None
     note_comments: str | None
+    gedcom_xref: str | None = None
+    source_snapshot: str | None = None
     export_status: MarriageRecordExportStatus = (
         MarriageRecordExportStatus.NICHT_EXPORTIERT
     )

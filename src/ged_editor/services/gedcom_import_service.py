@@ -6,10 +6,15 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from ged_editor.models.family_link import FamilyLink
+from ged_editor.models.marriage_record import (
+    MarriageRecord,
+    MarriageRecordStatus,
+)
 from ged_editor.models.person import Person
 from ged_editor.models.source import Source
-from ged_editor.repositories.family_repository import FamilyRepository
+from ged_editor.repositories.marriage_record_repository import (
+    MarriageRecordRepository,
+)
 from ged_editor.repositories.person_repository import PersonRepository
 from ged_editor.repositories.source_repository import SourceRepository
 from ged_editor.utils.gedcom_parser import (
@@ -47,7 +52,7 @@ class GEDCOMImportService:
         connection.row_factory = sqlite3.Row
         self._connection = connection
         self._persons = PersonRepository(connection)
-        self._families = FamilyRepository(connection)
+        self._marriage_records = MarriageRecordRepository(connection)
         self._sources = SourceRepository(connection)
 
     def import_file(self, file_path: str | Path) -> GedcomImportResult:
@@ -108,9 +113,14 @@ class GEDCOMImportService:
                         gedcom_xref=record.gedcom_xref,
                         name=record.name,
                         sex=record.sex,
-                        is_existing_record=True,
                         created_at=now,
                         modified_at=now,
+                        birth_date_raw=record.birth_date,
+                        birth_date_gedcom=record.birth_date,
+                        birth_place=record.birth_place,
+                        death_date_raw=record.death_date,
+                        death_date_gedcom=record.death_date,
+                        death_place=record.death_place,
                     )
                 )
                 continue
@@ -120,11 +130,15 @@ class GEDCOMImportService:
                 gedcom_xref=record.gedcom_xref,
                 name=record.name,
                 sex=record.sex,
-                is_existing_record=True,
                 created_at=existing.created_at,
                 modified_at=now,
-                needs_export=existing.needs_export,
                 source_snapshot=existing.source_snapshot,
+                birth_date_raw=record.birth_date,
+                birth_date_gedcom=record.birth_date,
+                birth_place=record.birth_place,
+                death_date_raw=record.death_date,
+                death_date_gedcom=record.death_date,
+                death_place=record.death_place,
             )
             if self._persons.update(updated) is None:
                 raise sqlite3.DatabaseError(
@@ -143,43 +157,70 @@ class GEDCOMImportService:
             wife = self._persons.get_by_xref(record.wife_xref)
             if record.husb_xref is not None and husband is None:
                 warnings.append(
-                    f"Family {record.gedcom_xref}: unknown HUSB XREF "
+                    f"FAM {record.gedcom_xref}: unknown HUSB XREF "
                     f"{record.husb_xref}; link left empty."
                 )
             if record.wife_xref is not None and wife is None:
                 warnings.append(
-                    f"Family {record.gedcom_xref}: unknown WIFE XREF "
+                    f"FAM {record.gedcom_xref}: unknown WIFE XREF "
                     f"{record.wife_xref}; link left empty."
                 )
 
-            existing = self._families.get_by_xref(record.gedcom_xref)
+            existing = self._marriage_records.get_by_xref(record.gedcom_xref)
             if existing is None:
-                self._families.create(
-                    FamilyLink(
+                self._marriage_records.create(
+                    MarriageRecord(
                         id=None,
-                        gedcom_xref=record.gedcom_xref,
-                        husb_person_id=husband.id if husband else None,
-                        wife_person_id=wife.id if wife else None,
-                        is_existing_record=True,
+                        year=None,
+                        number=None,
+                        display_number="",
+                        workflow_status=MarriageRecordStatus.IN_BEARBEITUNG,
                         created_at=now,
                         modified_at=now,
+                        husb_person_id=husband.id if husband else None,
+                        wife_person_id=wife.id if wife else None,
+                        marriage_date_raw=record.marriage_date,
+                        marriage_date_gedcom=record.marriage_date,
+                        marriage_place=record.marriage_place,
+                        note_origin_husband=None,
+                        note_origin_wife=None,
+                        note_death_husband=None,
+                        note_death_wife=None,
+                        note_legitimation=None,
+                        note_marginal=None,
+                        note_comments=None,
+                        gedcom_xref=record.gedcom_xref,
                     )
                 )
                 continue
 
-            updated = FamilyLink(
+            updated = MarriageRecord(
                 id=existing.id,
-                gedcom_xref=record.gedcom_xref,
-                husb_person_id=husband.id if husband else None,
-                wife_person_id=wife.id if wife else None,
-                is_existing_record=True,
+                year=existing.year,
+                number=existing.number,
+                display_number=existing.display_number,
+                workflow_status=existing.workflow_status,
+                export_status=existing.export_status,
                 created_at=existing.created_at,
                 modified_at=now,
+                husb_person_id=husband.id if husband else None,
+                wife_person_id=wife.id if wife else None,
+                marriage_date_raw=record.marriage_date,
+                marriage_date_gedcom=record.marriage_date,
+                marriage_place=record.marriage_place,
+                note_origin_husband=existing.note_origin_husband,
+                note_origin_wife=existing.note_origin_wife,
+                note_death_husband=existing.note_death_husband,
+                note_death_wife=existing.note_death_wife,
+                note_legitimation=existing.note_legitimation,
+                note_marginal=existing.note_marginal,
+                note_comments=existing.note_comments,
+                gedcom_xref=record.gedcom_xref,
                 source_snapshot=existing.source_snapshot,
             )
-            if self._families.update(updated) is None:
+            if self._marriage_records.update(updated) is None:
                 raise sqlite3.DatabaseError(
-                    f"Family {record.gedcom_xref} could not be updated."
+                    f"Marriage record {record.gedcom_xref} could not be updated."
                 )
         return len(families)
 

@@ -428,6 +428,6 @@ Für ged_editor gilt:
 ## 13.11.2026
 Der Begriff FAM-Datensatz bezeichnet die GEDCOM-Repräsentation eines MarriageRecord.
 
-Eine eigenständige FamilyLink-Entität existiert nicht.
+Eine eigenständige Entität für den FAM-Datensatz existiert nicht.
 
 ---

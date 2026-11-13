@@ -14,9 +14,10 @@ class MarriageRecordRepository:
     """Create, read, update, and delete marriage records in SQLite."""
 
     _COLUMNS = """
-        id, year, number, display_number, status, export_status, created_at, modified_at,
-        husb_person_id, wife_person_id, marriage_date_raw, marriage_date_gedcom,
-        marriage_place, note_origin_husband, note_origin_wife, note_death_husband,
+        id, gedcom_xref, source_snapshot, year, number, display_number,
+        workflow_status, export_status, created_at, modified_at, husb_person_id,
+        wife_person_id, marriage_date_raw, marriage_date_gedcom, marriage_place,
+        note_origin_husband, note_origin_wife, note_death_husband,
         note_death_wife, note_legitimation, note_marginal, note_comments
     """
 
@@ -30,13 +31,14 @@ class MarriageRecordRepository:
         cursor = self._connection.execute(
             """
             INSERT INTO marriage_record (
-                year, number, display_number, status, export_status, created_at, modified_at,
-                husb_person_id, wife_person_id, marriage_date_raw,
-                marriage_date_gedcom, marriage_place, note_origin_husband,
-                note_origin_wife, note_death_husband, note_death_wife,
-                note_legitimation, note_marginal, note_comments
+                gedcom_xref, source_snapshot, year, number, display_number,
+                workflow_status, export_status, created_at, modified_at,
+                husb_person_id, wife_person_id, marriage_date_raw, marriage_date_gedcom,
+                marriage_place, note_origin_husband, note_origin_wife,
+                note_death_husband, note_death_wife, note_legitimation,
+                note_marginal, note_comments
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             self._values(record),
         )
@@ -55,6 +57,21 @@ class MarriageRecordRepository:
         ).fetchone()
         return self._record_from_row(row) if row is not None else None
 
+    def get_by_xref(self, gedcom_xref: str | None) -> MarriageRecord | None:
+        """Return a marriage record by GEDCOM XREF, or None when absent."""
+        if gedcom_xref is None:
+            return None
+        rows = self._connection.execute(
+            f"SELECT {self._COLUMNS} FROM marriage_record "
+            "WHERE gedcom_xref = ? LIMIT 2",
+            (gedcom_xref,),
+        ).fetchall()
+        if len(rows) > 1:
+            raise sqlite3.IntegrityError(
+                f"Multiple marriage records use GEDCOM XREF {gedcom_xref}."
+            )
+        return self._record_from_row(rows[0]) if rows else None
+
     def update(self, record: MarriageRecord) -> MarriageRecord | None:
         """Update a marriage record and return the persisted record."""
         if record.id is None:
@@ -62,8 +79,8 @@ class MarriageRecordRepository:
         cursor = self._connection.execute(
             """
             UPDATE marriage_record
-            SET year = ?, number = ?, display_number = ?, status = ?,
-                export_status = ?,
+            SET gedcom_xref = ?, source_snapshot = ?, year = ?, number = ?,
+                display_number = ?, workflow_status = ?, export_status = ?,
                 created_at = ?, modified_at = ?, husb_person_id = ?,
                 wife_person_id = ?, marriage_date_raw = ?,
                 marriage_date_gedcom = ?, marriage_place = ?,
@@ -87,10 +104,12 @@ class MarriageRecordRepository:
     @staticmethod
     def _values(record: MarriageRecord) -> tuple[object, ...]:
         return (
+            record.gedcom_xref,
+            record.source_snapshot,
             record.year,
             record.number,
             record.display_number,
-            record.status.value,
+            record.workflow_status.value,
             record.export_status.value,
             record.created_at.isoformat(),
             record.modified_at.isoformat(),
@@ -112,10 +131,12 @@ class MarriageRecordRepository:
     def _record_from_row(row: sqlite3.Row) -> MarriageRecord:
         return MarriageRecord(
             id=row["id"],
+            gedcom_xref=row["gedcom_xref"],
+            source_snapshot=row["source_snapshot"],
             year=row["year"],
             number=row["number"],
             display_number=row["display_number"],
-            status=MarriageRecordStatus(row["status"]),
+            workflow_status=MarriageRecordStatus(row["workflow_status"]),
             export_status=MarriageRecordExportStatus(row["export_status"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             modified_at=datetime.fromisoformat(row["modified_at"]),

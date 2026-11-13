@@ -50,7 +50,6 @@ Eine Änderung wirkt sich auf alle zukünftigen Exporte aus.
 * application_version
 
 * marr_type
-* marr_plac
 * marriage_place_default
 
 * source_xref
@@ -118,16 +117,18 @@ TYPE ist hierbei verpflichtend.
 
 ---
 
-## marr_plac
+## marriage_place_default
 
 Beschreibung:
-legt fest, wo die Heirat stattgefunden hat. 
+Legt den Standardort für neue Heiratsurkunden fest.
 
 ### Verwendung:
-wird automatisch mit dem Standardwert vorbelegt und kann individuell geändert werden.
+Der Wert wird als Standardwert vorbelegt und kann individuell geändert werden.
 - Vorbelegung neuer Urkunden
 - vom Benutzer pro Urkunde änderbar
 - tatsächlicher Urkundeneintrag hat Vorrang
+
+Der initiale Wert darf leer sein.
 
 ---
 

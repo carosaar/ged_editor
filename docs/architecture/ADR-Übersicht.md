@@ -25,6 +25,7 @@ Diese Übersicht dient als schneller Einstieg in die Architekturentscheidungen d
 | ADR-018 | Exportmodell und GEDCOM-Erzeugung | Beschreibt die technische Umsetzung des GEDCOM-Exports und die Behandlung bestehender bzw. neuer FAM- und INDI-Datensätze. |
 | ADR-019 | Exportstatus, Sperrlogik und Wiederholungsexporte | Definiert Exportstatus, Sperrung exportierter Urkunden und Verhalten bei Wiederholungsexporten. |
 | ADR-020 | Projektparameter und Exporteinstellungen | Definition projektweiter Vorgaben wie SOUR-Zeiger, MARR.TYPE, REFN-/PAGE-Präfixe und Standardwerte für die Erfassung. |
+| ADR-021 | MarriageRecord repräsentiert GEDCOM-FAM | Legt MarriageRecord als Repräsentation des GEDCOM-FAM-Datensatzes fest. |
 
 ## Architekturblöcke
 ### Fachmodell
@@ -121,7 +122,7 @@ Die ADR-Sammlung verfolgt konsequent folgende Grundsätze:
 
 ## Aktueller Reifegrad
 
-Mit ADR-001 bis ADR-020 sind nun festgelegt:
+Mit ADR-001 bis ADR-021 sind nun festgelegt:
 
  ✅ Fachmodell
  ✅ Datenmodell

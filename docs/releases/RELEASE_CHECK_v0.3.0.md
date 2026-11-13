@@ -83,7 +83,10 @@ Folgende Einträge vorhanden:
 
 - [ ] schema_version
 - [ ] application_version
+- [ ] marr_type
+- [ ] marriage_place_default
 - [ ] source_xref
+- [ ] xref_prefix
 - [ ] refn_prefix
 - [ ] refn_suffix
 - [ ] page_prefix
@@ -107,6 +110,8 @@ Prüfen:
 - [ ] Datensatz lesbar
 - [ ] Datensatz änderbar
 - [ ] Datensatz löschbar
+- [ ] Geburtsdatum und -ort speicherbar
+- [ ] Sterbedatum und -ort speicherbar
 
 Ergebnis:
 
@@ -115,32 +120,15 @@ Ergebnis:
 
 ---
 
-# 6. FamilyLink-Tabelle
-
-## Tabelle family_link
-
-Prüfen:
-
-- [ ] Tabelle existiert
-- [ ] Datensatz anlegbar
-- [ ] Datensatz lesbar
-- [ ] Datensatz änderbar
-- [ ] Datensatz löschbar
-
-Ergebnis:
-
-☐ OK
-☐ Nicht OK
-
----
-
-# 7. MarriageRecord-Tabelle
+# 6. MarriageRecord-Tabelle
 
 ## Tabelle marriage_record
 
 Prüfen:
 
 - [ ] Tabelle existiert
+- [ ] GEDCOM-FAM-XREF wird im MarriageRecord gespeichert
+- [ ] `source_snapshot` ist vorhanden
 - [ ] Datensatz anlegbar
 - [ ] Datensatz lesbar
 - [ ] Datensatz änderbar
@@ -153,7 +141,7 @@ Ergebnis:
 
 ---
 
-# 8. Statusmodell
+# 7. Statusmodell
 
 ADR-015
 
@@ -163,11 +151,14 @@ Prüfen:
 
 Folgende Status definiert:
 
-- [ ] Neu
 - [ ] In Bearbeitung
 - [ ] Fertig
-- [ ] Geprüft
+
+Exportstatus (getrennt gemäß ADR-019):
+
+- [ ] Nicht exportiert
 - [ ] Exportiert
+- [ ] Konflikt
 
 Ergebnis:
 
@@ -176,7 +167,7 @@ Ergebnis:
 
 ---
 
-# 9. Repository-Schicht
+# 8. Repository-Schicht
 
 Prüfen:
 
@@ -187,13 +178,6 @@ Prüfen:
 - [ ] update
 
 ## PersonRepository
-
-- [ ] create
-- [ ] read
-- [ ] update
-- [ ] delete
-
-## FamilyRepository
 
 - [ ] create
 - [ ] read
@@ -214,7 +198,7 @@ Ergebnis:
 
 ---
 
-# 10. Tests
+# 9. Tests
 
 Prüfen:
 
@@ -232,7 +216,7 @@ Ergebnis:
 
 ---
 
-# 11. ADR-Konformität
+# 10. ADR-Konformität
 
 Prüfen:
 

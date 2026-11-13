@@ -3,6 +3,10 @@
 Stand: ADR-001 bis ADR-016
  Bewertung: Freigegeben für Entwicklungsstart v0.1.0
 
+> Historisches Dokument. Die aktuelle verbindliche Architektur ergibt sich aus
+> ADR-001 bis ADR-021 und `DATA_MODEL.md`; bei Abweichungen sind insbesondere
+> ADR-017 bis ADR-021 und das Datenmodell maßgeblich.
+
 ## Übersicht der Verantwortlichkeiten
 | ADR | Thema | Verantwortungsbereich |
 | --- | --- | --- |
@@ -159,23 +163,13 @@ Die ADRs definieren nun vollständig:
 ```
 Urkunde anlegen
        ↓
-Status = Neu
-       ↓
-Erfassung beginnen
-       ↓
 Status = In Bearbeitung
-       ↓
-Erfassung abschließen
        ↓
 Status = Fertig
        ↓
-Prüfung
-       ↓
-Status = Geprüft
-       ↓
 GEDCOM-Export
        ↓
-Status = Exportiert
+Exportstatus = Exportiert
 ```
 
 Unterstützende ADRs:
@@ -280,21 +274,11 @@ Festgelegt durch:
 * ADR-002
 * ADR-010
 
-## Verbleibende offene Architekturentscheidungen
+## Früher offene Architekturthemen
 
-Nicht kritisch für v0.1.0.
-
-Später mögliche ADRs:
-
-| ADR | Thema |
-| --- | --- |
-| ADR-017 | Datenbankschema-Migrationen |
-| ADR-018 | Undo/Redo-Konzept |
-| ADR-019 | Validierungsregeln |
-| ADR-020 | Such- und Filterkonzept |
-| ADR-021 | Importstrategie für künftige Geburtsurkunden |
-| ADR-022 | Exportprofile und Formatvorlagen |
-| ADR-023 | Druck- und PDF-Ausgaben |
+Die nachfolgenden, bei Erstellung dieses Dokuments noch offenen Themen wurden
+teilweise durch ADR-017 bis ADR-021 entschieden. Diese Matrix ist kein
+Verzeichnis aktueller offener Architekturentscheidungen.
 
 ## Abschlussbewertung
 

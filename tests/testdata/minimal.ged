@@ -4,6 +4,12 @@
 0 @I1@ INDI
 1 NAME Johann /Müller/
 1 SEX M
+1 BIRT
+2 DATE 11 MAY 1870
+2 PLAC Sulzbach
+1 DEAT
+2 DATE 2 JAN 1940
+2 PLAC Saarbrücken
 1 NOTE This note is intentionally ignored.
 0 @I2@ INDI
 1 NAME Anna /Schmidt/
@@ -11,6 +17,9 @@
 0 @F1@ FAM
 1 HUSB @I1@
 1 WIFE @I2@
+1 MARR
+2 DATE 12 MAY 1890
+2 PLAC Sulzbach
 1 CHIL @I3@
 0 @F2@ FAM
 1 HUSB @I99@

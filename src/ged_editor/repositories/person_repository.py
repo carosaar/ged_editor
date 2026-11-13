@@ -19,20 +19,25 @@ class PersonRepository:
         cursor = self._connection.execute(
             """
             INSERT INTO person (
-                gedcom_xref, name, sex, is_existing_record, created_at, modified_at,
-                needs_export, source_snapshot
+                gedcom_xref, name, sex, created_at, modified_at, source_snapshot,
+                birth_date_raw, birth_date_gedcom, birth_place, death_date_raw,
+                death_date_gedcom, death_place
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 person.gedcom_xref,
                 person.name,
                 person.sex,
-                int(person.is_existing_record),
                 person.created_at.isoformat(),
                 person.modified_at.isoformat(),
-                int(person.needs_export),
                 person.source_snapshot,
+                person.birth_date_raw,
+                person.birth_date_gedcom,
+                person.birth_place,
+                person.death_date_raw,
+                person.death_date_gedcom,
+                person.death_place,
             ),
         )
         created = self.get_by_id(cursor.lastrowid)
@@ -46,8 +51,9 @@ class PersonRepository:
             return None
         row = self._connection.execute(
             """
-            SELECT id, gedcom_xref, name, sex, is_existing_record,
-                   created_at, modified_at, needs_export, source_snapshot
+            SELECT id, gedcom_xref, name, sex, created_at, modified_at,
+                   source_snapshot, birth_date_raw, birth_date_gedcom,
+                   birth_place, death_date_raw, death_date_gedcom, death_place
             FROM person
             WHERE id = ?
             """,
@@ -61,8 +67,9 @@ class PersonRepository:
             return None
         rows = self._connection.execute(
             """
-            SELECT id, gedcom_xref, name, sex, is_existing_record,
-                   created_at, modified_at, needs_export, source_snapshot
+            SELECT id, gedcom_xref, name, sex, created_at, modified_at,
+                   source_snapshot, birth_date_raw, birth_date_gedcom,
+                   birth_place, death_date_raw, death_date_gedcom, death_place
             FROM person
             WHERE gedcom_xref = ?
             LIMIT 2
@@ -82,20 +89,25 @@ class PersonRepository:
         cursor = self._connection.execute(
             """
             UPDATE person
-            SET gedcom_xref = ?, name = ?, sex = ?, is_existing_record = ?,
-                created_at = ?, modified_at = ?, needs_export = ?,
-                source_snapshot = ?
+            SET gedcom_xref = ?, name = ?, sex = ?, created_at = ?,
+                modified_at = ?, source_snapshot = ?, birth_date_raw = ?,
+                birth_date_gedcom = ?, birth_place = ?, death_date_raw = ?,
+                death_date_gedcom = ?, death_place = ?
             WHERE id = ?
             """,
             (
                 person.gedcom_xref,
                 person.name,
                 person.sex,
-                int(person.is_existing_record),
                 person.created_at.isoformat(),
                 person.modified_at.isoformat(),
-                int(person.needs_export),
                 person.source_snapshot,
+                person.birth_date_raw,
+                person.birth_date_gedcom,
+                person.birth_place,
+                person.death_date_raw,
+                person.death_date_gedcom,
+                person.death_place,
                 person.id,
             ),
         )
@@ -113,9 +125,13 @@ class PersonRepository:
             gedcom_xref=row["gedcom_xref"],
             name=row["name"],
             sex=row["sex"],
-            is_existing_record=bool(row["is_existing_record"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             modified_at=datetime.fromisoformat(row["modified_at"]),
-            needs_export=bool(row["needs_export"]),
             source_snapshot=row["source_snapshot"],
+            birth_date_raw=row["birth_date_raw"],
+            birth_date_gedcom=row["birth_date_gedcom"],
+            birth_place=row["birth_place"],
+            death_date_raw=row["death_date_raw"],
+            death_date_gedcom=row["death_date_gedcom"],
+            death_place=row["death_place"],
         )

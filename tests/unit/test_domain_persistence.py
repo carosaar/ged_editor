@@ -6,12 +6,12 @@ from ged_editor.app.constants import APP_VERSION
 from ged_editor.database.connection import DatabaseConnection
 from ged_editor.database.schema import SCHEMA_VERSION
 from ged_editor.models import (
-    FamilyLink,
     MarriageRecord,
+    MarriageRecordExportStatus,
     MarriageRecordStatus,
     Person,
 )
-from ged_editor.services import FamilyService, MarriageRecordService, PersonService
+from ged_editor.services import MarriageRecordService, PersonService
 from ged_editor.services.project_service import ProjectService
 
 
@@ -22,7 +22,6 @@ def _new_person(name: str) -> Person:
         gedcom_xref=None,
         name=name,
         sex=None,
-        is_existing_record=False,
         created_at=now,
         modified_at=now,
     )
@@ -38,7 +37,6 @@ def test_person_crud_round_trip(tmp_path) -> None:
 
     assert created.id is not None
     assert created.gedcom_xref is None
-    assert created.needs_export is False
     assert created.source_snapshot is None
     assert service.get_by_id(created.id) == created
     database.close()
@@ -47,11 +45,16 @@ def test_person_crud_round_trip(tmp_path) -> None:
     service = PersonService(database.connect())
     assert service.get_by_id(created.id) == created
 
-    updated = replace(created, name="Anna Muster", is_existing_record=True)
     updated = replace(
-        updated,
-        needs_export=True,
+        created,
+        name="Anna Muster",
         source_snapshot='{"name":"Anna Beispiel"}',
+        birth_date_raw="12.01.1900",
+        birth_date_gedcom="12 JAN 1900",
+        birth_place="Sulzbach",
+        death_date_raw="01.02.1980",
+        death_date_gedcom="1 FEB 1980",
+        death_place="Saarbrücken",
     )
     saved = service.update(updated)
     assert saved == updated
@@ -62,48 +65,16 @@ def test_person_crud_round_trip(tmp_path) -> None:
     database.close()
 
 
-def test_family_link_crud_round_trip(tmp_path) -> None:
-    database = DatabaseConnection(tmp_path / "families.edg")
-    connection = database.connect(create=True)
-    database.initialize_schema()
-    people = PersonService(connection)
-    husband = people.create(_new_person("Max Beispiel"))
-    wife = people.create(_new_person("Eva Beispiel"))
-    service = FamilyService(connection)
-    now = datetime.now()
-    family = FamilyLink(
-        id=None,
-        gedcom_xref=None,
-        husb_person_id=husband.id,
-        wife_person_id=wife.id,
-        is_existing_record=False,
-        created_at=now,
-        modified_at=now,
-    )
-
-    created = service.create(family)
-
-    assert created.id is not None
-    assert service.get_by_id(created.id) == created
-    assert created.source_snapshot is None
-    database.close()
-
-    database = DatabaseConnection(tmp_path / "families.edg")
-    service = FamilyService(database.connect())
-    assert service.get_by_id(created.id) == created
-
-    updated = replace(
-        created,
-        gedcom_xref="@F1@",
-        is_existing_record=True,
-        source_snapshot='{"husb":"@I1@","wife":"@I2@"}',
-    )
-    assert service.update(updated) == updated
-    assert service.get_by_id(created.id) == updated
-
-    assert service.delete(created.id)
-    assert service.get_by_id(created.id) is None
-    database.close()
+def test_record_status_enums_keep_workflow_and_export_status_separate() -> None:
+    assert {status.value for status in MarriageRecordStatus} == {
+        "In Bearbeitung",
+        "Fertig",
+    }
+    assert {status.value for status in MarriageRecordExportStatus} == {
+        "Nicht exportiert",
+        "Exportiert",
+        "Konflikt",
+    }
 
 
 def test_marriage_record_crud_round_trip(tmp_path) -> None:
@@ -120,7 +91,7 @@ def test_marriage_record_crud_round_trip(tmp_path) -> None:
         year=1878,
         number=15,
         display_number="15/1878",
-        status=MarriageRecordStatus.NEU,
+        workflow_status=MarriageRecordStatus.IN_BEARBEITUNG,
         created_at=now,
         modified_at=now,
         husb_person_id=husband.id,
@@ -135,12 +106,14 @@ def test_marriage_record_crud_round_trip(tmp_path) -> None:
         note_legitimation=None,
         note_marginal=None,
         note_comments=None,
+        gedcom_xref="@F15@",
+        source_snapshot='{"marriage_date":"12 MAY 1878"}',
     )
 
     created = service.create(record)
 
     assert created.id is not None
-    assert created.status is MarriageRecordStatus.NEU
+    assert created.workflow_status is MarriageRecordStatus.IN_BEARBEITUNG
     assert created.export_status.value == "Nicht exportiert"
     assert service.get_by_id(created.id) == created
     database.close()
@@ -149,11 +122,9 @@ def test_marriage_record_crud_round_trip(tmp_path) -> None:
     service = MarriageRecordService(database.connect())
     assert service.get_by_id(created.id) == created
 
-    from ged_editor.models import MarriageRecordExportStatus
-
     updated = replace(
         created,
-        status=MarriageRecordStatus.FERTIG,
+        workflow_status=MarriageRecordStatus.FERTIG,
         export_status=MarriageRecordExportStatus.KONFLIKT,
     )
     assert service.update(updated) == updated
@@ -218,6 +189,9 @@ def test_phase_two_project_is_backed_up_before_schema_upgrade(tmp_path) -> None:
     assert values["schema_version"] == SCHEMA_VERSION
     assert values["application_version"] == APP_VERSION
     assert values["source_xref"] == "@S1@"
+    assert values["marr_type"] == ""
+    assert values["marriage_place_default"] == ""
+    assert values["xref_prefix"] == ""
     assert values["refn_prefix"] == ""
     assert values["refn_suffix"] == ""
     assert values["page_prefix"] == ""
@@ -233,7 +207,6 @@ def test_schema_v3_migration_separates_legacy_exported_status(tmp_path) -> None:
 
     with sqlite3.connect(project_path) as connection:
         connection.execute("PRAGMA foreign_keys = OFF")
-        connection.execute("DROP TABLE family_link")
         connection.execute("DROP TABLE marriage_record")
         connection.execute("DROP TABLE person")
         connection.execute(
@@ -300,6 +273,17 @@ def test_schema_v3_migration_separates_legacy_exported_status(tmp_path) -> None:
             """,
             (now, now),
         )
+        connection.executemany(
+            """
+            INSERT INTO marriage_record (
+                year, number, display_number, status, created_at, modified_at
+            ) VALUES (1900, ?, ?, ?, ?, ?)
+            """,
+            (
+                (2, "2/1900", "Neu", now, now),
+                (3, "3/1900", "Geprüft", now, now),
+            ),
+        )
         connection.execute(
             'UPDATE meta SET "value" = "3" WHERE "key" = "schema_version"'
         )
@@ -313,15 +297,140 @@ def test_schema_v3_migration_separates_legacy_exported_status(tmp_path) -> None:
     assert opened.project.schema_version == SCHEMA_VERSION
     assert service.connection is not None
     migrated_record = service.connection.execute(
-        "SELECT status, export_status FROM marriage_record WHERE id = 1"
+        "SELECT workflow_status, export_status FROM marriage_record WHERE id = 1"
     ).fetchone()
-    assert tuple(migrated_record) == ("Geprüft", "Exportiert")
-    assert {
+    assert tuple(migrated_record) == ("Fertig", "Exportiert")
+    migrated_statuses = service.connection.execute(
+        "SELECT workflow_status, export_status FROM marriage_record ORDER BY id"
+    ).fetchall()
+    assert [tuple(row) for row in migrated_statuses] == [
+        ("Fertig", "Exportiert"),
+        ("In Bearbeitung", "Nicht exportiert"),
+        ("Fertig", "Nicht exportiert"),
+    ]
+    person_columns = {
         row["name"]
         for row in service.connection.execute("PRAGMA table_info(person)")
-    } >= {"needs_export", "source_snapshot"}
-    assert {
-        row["name"]
-        for row in service.connection.execute("PRAGMA table_info(family_link)")
-    } >= {"source_snapshot"}
+    }
+    assert "source_snapshot" in person_columns
+    assert "needs_export" not in person_columns
+    assert "is_existing_record" not in person_columns
+    assert service.connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'family_link'"
+    ).fetchone() is None
+    service.close_project()
+
+
+def test_schema_v4_migration_moves_family_data_to_marriage_records(
+    tmp_path,
+) -> None:
+    project_path = tmp_path / "legacy-v4.edg"
+    creator = ProjectService()
+    created = creator.create_new_project(project_path, "Legacy")
+    assert created.succeeded
+    creator.close_project()
+
+    now = datetime.now().isoformat()
+    with sqlite3.connect(project_path) as connection:
+        person_id = connection.execute(
+            """
+            INSERT INTO person (
+                gedcom_xref, name, sex, created_at, modified_at
+            ) VALUES ('@I1@', 'Max Beispiel', 'M', ?, ?)
+            """,
+            (now, now),
+        ).lastrowid
+        connection.execute(
+            "ALTER TABLE person ADD COLUMN is_existing_record INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execute(
+            "ALTER TABLE person ADD COLUMN needs_export INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execute(
+            """
+            INSERT INTO marriage_record (
+                year, number, display_number, workflow_status, created_at, modified_at,
+                marriage_date_raw, marriage_date_gedcom, marriage_place
+            ) VALUES (1901, 2, '2/1901', 'Fertig', ?, ?, '01.02.1901',
+                      '1 FEB 1901', 'Sulzbach')
+            """,
+            (now, now),
+        )
+        connection.execute(
+            """
+            CREATE TABLE family_link (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                gedcom_xref TEXT,
+                husb_person_id INTEGER REFERENCES person(id),
+                wife_person_id INTEGER REFERENCES person(id),
+                is_existing_record INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                modified_at TEXT NOT NULL,
+                source_snapshot TEXT
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO family_link (
+                id, gedcom_xref, husb_person_id, wife_person_id,
+                is_existing_record, created_at, modified_at, source_snapshot
+            ) VALUES (12, '@F12@', ?, NULL, 1, ?, ?, '{"husb":"@I1@"}')
+            """,
+            (person_id, now, now),
+        )
+        connection.execute(
+            'UPDATE meta SET "value" = "4" WHERE "key" = "schema_version"'
+        )
+        connection.execute("UPDATE project SET schema_version = '4'")
+
+    service = ProjectService()
+    opened = service.open_project(project_path)
+
+    assert opened.succeeded
+    assert service.connection is not None
+    record = service.connection.execute(
+        """
+        SELECT gedcom_xref, source_snapshot, year, number, workflow_status,
+               export_status,
+               husb_person_id, wife_person_id, created_at, modified_at
+        FROM marriage_record WHERE gedcom_xref = '@F12@'
+        """
+    ).fetchone()
+    assert tuple(record) == (
+        "@F12@",
+        '{"husb":"@I1@"}',
+        None,
+        None,
+        "In Bearbeitung",
+        "Nicht exportiert",
+        person_id,
+        None,
+        now,
+        now,
+    )
+    existing_record = service.connection.execute(
+        """
+        SELECT year, number, display_number, workflow_status, marriage_date_gedcom,
+               marriage_place
+        FROM marriage_record WHERE id = 1
+        """
+    ).fetchone()
+    assert tuple(existing_record) == (
+        1901,
+        2,
+        "2/1901",
+        "Fertig",
+        "1 FEB 1901",
+        "Sulzbach",
+    )
+    assert service.connection.execute(
+        "SELECT COUNT(*) FROM marriage_record"
+    ).fetchone()[0] == 2
+    assert service.connection.execute(
+        "SELECT COUNT(*) FROM person WHERE gedcom_xref = '@I1@'"
+    ).fetchone()[0] == 1
+    assert service.connection.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'family_link'"
+    ).fetchone() is None
     service.close_project()

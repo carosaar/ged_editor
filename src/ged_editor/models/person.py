@@ -12,8 +12,12 @@ class Person:
     gedcom_xref: str | None
     name: str
     sex: str | None
-    is_existing_record: bool
     created_at: datetime
     modified_at: datetime
-    needs_export: bool = False
     source_snapshot: str | None = None
+    birth_date_raw: str | None = None
+    birth_date_gedcom: str | None = None
+    birth_place: str | None = None
+    death_date_raw: str | None = None
+    death_date_gedcom: str | None = None
+    death_place: str | None = None

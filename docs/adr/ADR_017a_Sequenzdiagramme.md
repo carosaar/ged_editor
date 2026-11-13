@@ -100,53 +100,6 @@
 Urkunde 15/1887
         │
         ▼
-Person:
-Joseph Müller
-
-needs_export = false
-
-        │
-        │ Export
-        ▼
-
-export_status = Exportiert
-
-        │
-        │ spätere Urkunde
-        ▼
-
-Urkunde 42/1891
-
-Name gefunden:
-Joseph Müller
-
-        │
-        │ neue Erkenntnis
-        ▼
-
-Joseph (Josef) Müller
-
-        │
-        ▼
-
-Person aktualisieren
-
-needs_export = true
-
-        │
-        ▼
-
-Projektübersicht
-
-Person besitzt
-nicht exportierte Änderungen
-
-        │
-        ▼
-
-Nächster Export
-
-Person erneut berücksichtigen
-
-needs_export = false
+Personendaten werden projektweit gespeichert.
+Eine Person besitzt keinen eigenen Exportstatus.
 ```

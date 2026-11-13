@@ -252,10 +252,8 @@ Der Exportstatus ergänzt das Workflowmodell.
 Workflowstatus:
 
 ```text
-Neu
 In Bearbeitung
 Fertig
-Geprüft
 ```
 
 Exportstatus:

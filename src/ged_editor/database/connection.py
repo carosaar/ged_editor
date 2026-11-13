@@ -10,6 +10,7 @@ from ged_editor.database.schema import (
     initialize_schema,
     initialize_schema_statements,
     upgrade_schema_v4,
+    upgrade_schema_v5,
     validate_project_schema,
     validate_schema,
 )
@@ -86,17 +87,31 @@ class DatabaseConnection:
 
         if current_version < expected_version:
             self.create_migration_backup()
-            with connection:
-                initialize_schema_statements(connection)
-                upgrade_schema_v4(connection)
-                connection.execute(
-                    'UPDATE meta SET "value" = ? WHERE "key" = ?',
-                    (SCHEMA_VERSION, "schema_version"),
-                )
-                connection.execute(
-                    "UPDATE project SET schema_version = ?",
-                    (SCHEMA_VERSION,),
-                )
+            connection.execute("PRAGMA foreign_keys = OFF")
+            try:
+                with connection:
+                    initialize_schema_statements(connection)
+                    if current_version < 4:
+                        upgrade_schema_v4(connection)
+                    if current_version < 5:
+                        upgrade_schema_v5(connection)
+                    violations = connection.execute(
+                        "PRAGMA foreign_key_check"
+                    ).fetchall()
+                    if violations:
+                        raise sqlite3.IntegrityError(
+                            "Project migration produced invalid foreign keys."
+                        )
+                    connection.execute(
+                        'UPDATE meta SET "value" = ? WHERE "key" = ?',
+                        (SCHEMA_VERSION, "schema_version"),
+                    )
+                    connection.execute(
+                        "UPDATE project SET schema_version = ?",
+                        (SCHEMA_VERSION,),
+                    )
+            finally:
+                connection.execute("PRAGMA foreign_keys = ON")
             logger.info("Upgraded project schema to version %s", SCHEMA_VERSION)
 
         self.validate_schema()

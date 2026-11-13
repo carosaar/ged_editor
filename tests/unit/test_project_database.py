@@ -1,3 +1,5 @@
+import sqlite3
+
 import pytest
 
 from ged_editor.database.connection import DatabaseConnection
@@ -22,7 +24,6 @@ def test_database_connection_creates_edg_schema(tmp_path) -> None:
         "project",
         "meta",
         "person",
-        "family_link",
         "marriage_record",
         "source",
     }
@@ -56,10 +57,12 @@ def test_database_connection_creates_edg_schema(tmp_path) -> None:
     }
     assert record_columns == {
         "id",
+        "gedcom_xref",
+        "source_snapshot",
         "year",
         "number",
         "display_number",
-        "status",
+        "workflow_status",
         "export_status",
         "created_at",
         "modified_at",
@@ -91,12 +94,29 @@ def test_database_connection_creates_edg_schema(tmp_path) -> None:
         row["name"]
         for row in database.connection.execute("PRAGMA table_info(person)")
     }
-    assert {"needs_export", "source_snapshot"} <= person_columns
-    family_columns = {
-        row["name"]
-        for row in database.connection.execute("PRAGMA table_info(family_link)")
+    assert person_columns == {
+        "id",
+        "gedcom_xref",
+        "name",
+        "sex",
+        "created_at",
+        "modified_at",
+        "source_snapshot",
+        "birth_date_raw",
+        "birth_date_gedcom",
+        "birth_place",
+        "death_date_raw",
+        "death_date_gedcom",
+        "death_place",
     }
-    assert "source_snapshot" in family_columns
+    with pytest.raises(sqlite3.IntegrityError):
+        database.connection.execute(
+            """
+            INSERT INTO marriage_record (
+                year, number, display_number, workflow_status, created_at, modified_at
+            ) VALUES (1900, 1, '1/1900', 'Neu', 'now', 'now')
+            """
+        )
     database.close()
 
     with project_path.open("rb") as project_file:

@@ -18,7 +18,7 @@ Status: Abgeschlossen ✅
 
 Vorhandene Architekturentscheidungen:
 
-- ADR-001 bis ADR-016 verabschiedet
+- ADR-001 bis ADR-021 verabschiedet
 - Konsistenzprüfung durchgeführt
 - Technologiestack festgelegt
 - Workflow definiert
@@ -93,7 +93,7 @@ Domänenmodell implementieren.
 
 ### Urkunden
 
-- [ ] Urkundentabelle
+- [ ] MarriageRecord als Urkunden- und GEDCOM-FAM-Datensatz
 - [ ] Statusmodell (ADR-015)
 
 ### Personen
@@ -101,10 +101,9 @@ Domänenmodell implementieren.
 - [ ] INDI-Modell
 - [ ] Repository
 
-### Familien
+### MarriageRecord/FAM
 
-- [ ] FAM-Modell
-- [ ] Repository
+- [ ] GEDCOM-FAM-XREF im MarriageRecord speichern
 
 ### Quellen
 

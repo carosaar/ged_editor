@@ -16,7 +16,7 @@ Insbesondere:
 - ADR-018 Exportmodell und GEDCOM-Erzeugung
 - ADR-019 Exportstatus, Sperrlogik und Wiederholungsexporte
 - ADR-020 Projektparameter und Exporteinstellungen
-- ADR-021 MarriageRecord ersetzt FamilyLink
+- ADR-021 MarriageRecord repräsentiert den GEDCOM-FAM-Datensatz
 
 ---
 
@@ -168,6 +168,16 @@ page_prefix
 page_suffix
 ```
 
+### Systemparameter
+
+```text
+schema_version
+application_version
+```
+
+Leere Werte sind für projektweite Einstellungsparameter zulässig.
+`schema_version` und `application_version` werden durch die Anwendung verwaltet.
+
 ---
 
 # Entität: MarriageRecord
@@ -178,7 +188,7 @@ Repräsentiert eine Heiratsurkunde.
 
 Gleichzeitig repräsentiert ein MarriageRecord den zugehörigen GEDCOM-FAM-Datensatz.
 
-Eine separate FamilyLink-Entität existiert nicht.
+Der GEDCOM-FAM-Datensatz wird direkt durch MarriageRecord repräsentiert.
 
 Gemäß ADR-001 ist MarriageRecord das führende Fachobjekt der Anwendung.
 
@@ -190,6 +200,10 @@ Gemäß ADR-001 ist MarriageRecord das führende Fachobjekt der Anwendung.
 id
 
 gedcom_xref
+
+created_at
+
+modified_at
 ```
 
 ### Bedeutung von gedcom_xref
@@ -216,7 +230,12 @@ Der XREF wird beim Export erzeugt.
 year
 
 number
+
+display_number
 ```
+
+Bei importierten FAM-Datensätzen können `year` und `number` zunächst `NULL`
+sein, wenn keine Urkundenidentifikation vorliegt.
 
 Die Anzeigedarstellung:
 
@@ -224,7 +243,8 @@ Die Anzeigedarstellung:
 15/1887
 ```
 
-wird aus diesen Feldern erzeugt.
+wird aus diesen Feldern erzeugt; bei fehlender Urkundenidentifikation bleibt
+`display_number` leer.
 
 ---
 
@@ -335,6 +355,10 @@ gedcom_xref
 name
 
 sex
+
+created_at
+
+modified_at
 ```
 
 ---
@@ -417,6 +441,10 @@ id
 gedcom_xref
 
 title
+
+created_at
+
+modified_at
 ```
 
 ---
@@ -492,6 +520,9 @@ MarriageRecord
 | id             |
 | project_name   |
 | schema_version |
+| application_version |
+| created_at     |
+| modified_at    |
 +----------------+
          |
          | 1:1
@@ -501,6 +532,8 @@ MarriageRecord
 |    ProjectSettings     |
 +------------------------+
 | source_xref            |
+| schema_version         |
+| application_version    |
 | marr_type              |
 | marriage_place_default |
 | xref_prefix            |
@@ -521,8 +554,11 @@ MarriageRecord
 | id                     |
 | gedcom_xref            |
 | source_snapshot        |
+| created_at             |
+| modified_at            |
 | year                   |
 | number                 |
+| display_number         |
 | workflow_status        |
 | export_status          |
 | marriage_date_raw      |
@@ -545,6 +581,8 @@ MarriageRecord
 | source_snapshot        |
 | name                   |
 | sex                    |
+| created_at             |
+| modified_at            |
 | birth_date_raw         |
 | birth_date_gedcom      |
 | birth_place            |
@@ -559,6 +597,8 @@ MarriageRecord
 | id                     |
 | gedcom_xref            |
 | title                  |
+| created_at             |
+| modified_at            |
 +------------------------+
 ```
 
@@ -582,10 +622,14 @@ erDiagram
         string project_name
         string schema_version
         string application_version
+        string created_at
+        string modified_at
     }
 
     PROJECT_SETTINGS {
         string source_xref
+        string schema_version
+        string application_version
         string marr_type
         string marriage_place_default
         string xref_prefix
@@ -599,8 +643,11 @@ erDiagram
         int id
         string gedcom_xref
         string source_snapshot
+        string created_at
+        string modified_at
         int year
         int number
+        string display_number
         string workflow_status
         string export_status
         string marriage_date_raw
@@ -616,6 +663,8 @@ erDiagram
         string source_snapshot
         string name
         string sex
+        string created_at
+        string modified_at
         string birth_date_raw
         string birth_date_gedcom
         string birth_place
@@ -628,6 +677,8 @@ erDiagram
         int id
         string gedcom_xref
         string title
+        string created_at
+        string modified_at
     }
 ```
 
@@ -643,7 +694,7 @@ Alle Arbeitsabläufe orientieren sich an MarriageRecord.
 
 ## 2. MarriageRecord repräsentiert den GEDCOM-FAM-Datensatz
 
-Eine separate FamilyLink-Entität existiert nicht.
+Der GEDCOM-FAM-Datensatz wird direkt durch MarriageRecord repräsentiert.
 
 ---
 
