@@ -33,3 +33,5 @@ Thumbs.db
 
 # Eigene Festlegungen
 MyDOC/
+create_analysis_bundle.bat
+project_analysis_bundle.txt
