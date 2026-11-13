@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS source (
 )
 """
 
+# Kept only to convert projects written before the current two-state workflow.
 _MARRIAGE_RECORD_V4_TABLE_SQL: Final[str] = """
 CREATE TABLE IF NOT EXISTS marriage_record (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -259,6 +260,7 @@ def upgrade_schema_v4(connection: sqlite3.Connection) -> None:
 
 def upgrade_schema_v5(connection: sqlite3.Connection) -> None:
     """Normalize domain tables and migrate FAM records into MarriageRecord."""
+    # Read the v4-only table before dropping it so imported FAM data survives.
     family_columns = _table_columns(connection, "family_link")
     family_rows = (
         connection.execute("SELECT * FROM family_link").fetchall()

@@ -32,6 +32,10 @@
 ---
 ## 0.3.0
 
+> Historischer Releaseeintrag. Das damalige Statusmodell wurde durch ADR-015
+> abgelöst; die folgenden Statusbegriffe beschreiben nicht den aktuellen
+> Workflow.
+
 ### Hinzugefügt
 
 - EDG-Projektdatei als zentrales Arbeitsformat auf Basis von SQLite

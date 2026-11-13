@@ -154,6 +154,10 @@ Auch nach erfolgreichem Export weiterhin bearbeitbar:
 ## Begründung
 
 Personendatensätze stellen projektweite Stammdatenobjekte dar.
+Sie bleiben unabhängig vom Exportstatus einzelner MarriageRecords bearbeitbar.
+
+Änderungen an einer Person repräsentieren stets den aktuellsten projektweiten Erkenntnisstand und führen 
+nicht zur Entsperrung bereits exportierter Urkunden.
 
 Eine Person kann:
 

@@ -93,7 +93,7 @@ Domänenmodell implementieren.
 
 ### Urkunden
 
-- [ ] MarriageRecord als Urkunden- und GEDCOM-FAM-Datensatz
+- [x] MarriageRecord als Urkunden- und GEDCOM-FAM-Datensatz
 - [ ] Statusmodell (ADR-015)
 
 ### Personen

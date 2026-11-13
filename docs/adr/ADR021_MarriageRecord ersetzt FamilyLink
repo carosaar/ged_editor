@@ -1,5 +1,10 @@
 # ADR-021: MarriageRecord ersetzt FamilyLink
 
+> Historische Begriffsverwendungen in diesem Entscheidungsnachweis beschreiben
+> ausschließlich das frühere Modell. Für das aktuelle Modell ist
+> `docs/architecture/DATA_MODEL.md` maßgeblich; dort existiert keine separate
+> FAM-Entität.
+
 ## Status
 
 Akzeptiert

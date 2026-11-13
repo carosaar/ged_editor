@@ -59,257 +59,272 @@ Er dokumentiert die Inhalte und Ergebnisse des Exports.
 Version 1.0 verwendet standardmäßig:
 
 ```text
-Markdown (*.*d)
+Markdown (*.md)
 ```
 
 Begründung:
 
-- menschenles*ar
-- langfristig archivierungsfähi*
+- menschenlesbar
+- langfristig archivierungsfähig
 - einfach zu erzeugen
-- einfach*weiterzugeben*- problemlos in PDF konvertierbar
-**pätere Ausbaustufen*können zusätzlich unterstützen:
+- einfach weiterzugeben
+- problemlos in PDF konvertierbar
 
-`*`text
-PDF*HTML
+Spätere Ausbaustufen können zusätzlich unterstützen:
+
+```text
+PDF
+HTML
 ```
 
 ## Prüfbericht
 
-###*Zweck
+### Zweck
 
-Unterstützung der fachliche**Endkontrolle vor einem Export.
+Unterstützung der fachlichen Endkontrolle vor einem Export.
 
-##* Mindest*nhalt
+### Mindestinhalt
 
 #### Projektinformationen
 
-*``text
+```text
 Projektname
-Erstellungsdatu*
+Erstellungsdatum
 Bearbeitungsstand
 Projektversion
-*``
-
-*### Urkundenstat*stik
-
-```text
-Anzahl Ur*unden gesamt
-Anzahl Ur*unden neu
-Anzahl Urkunden in Bearb*itung
-An*ahl Urkunden fertig
-Anzahl Urkunde* geprüft
 ```
 
-#### Personenstatist*k*
+#### Urkundenstatistik
+
+```text
+Anzahl Urkunden gesamt
+Anzahl Urkunden neu
+Anzahl Urkunden in Bearbeitung
+Anzahl Urkunden fertig
+```
+
+#### Personenstatistik
+
 ```text
 Neue Personen
-Geänderte P*rsonen
-Person*nzuordnungen
-Offene Personenzuord*ungen
+Geänderte Personen
+Personenzuordnungen
+Offene Personenzuordnungen
 ```
 
 #### Familienstatistik
-**``text
+
+```text
 Neue Familien
-Geänderte Fam*lien
+Geänderte Familien
 ```
 
 #### Auffälligkeiten
 
-*``text
-fehlende Pflichtfelder*offene Zuordnungen
-ungeprüfte*Urkunden
+```text
+fehlende Pflichtfelder
+offene Zuordnungen
+Urkunden in Bearbeitung
 Warnungen
-``*
+```
 
 ### Ziel
 
-Der Benutzer soll erke*nen können, ob das Projekt exportb*reit ist.
+Der Benutzer soll erkennen können, ob das Projekt exportbereit ist.
 
-## Export*ericht
+## Exportbericht
 
 ### Zweck
 
-*okumentation eines konkret*durchgeführten Exports.
+Dokumentation eines konkret durchgeführten Exports.
 
-Der Beric*t ist Bestandteil*der Exportergebnisse.
+Der Bericht ist Bestandteil der Exportergebnisse.
 
-### Mindest*nhalt
+### Mindestinhalt
 
-#### Allgemeine Information*n
+#### Allgemeine Informationen
 
-```text*Projektname
+```text
+Projektname
 Projektversion
-Exportd*tum
+Exportdatum
 Programmversion
-``*
+```
 
-#### Quelldate*en
-
-```text
-U*sprüngliche GEDCOM-Datei*Erzeugte GEDCOM-Datei*```
-
-#### Quellenzu*rdnung
+#### Quelldateien
 
 ```text
-verwendeter SOUR-D*tensatz
+Ursprüngliche GEDCOM-Datei
+Erzeugte GEDCOM-Datei
+```
+
+#### Quellenzuordnung
+
+```text
+verwendeter SOUR-Datensatz
 ```
 
 #### Exportstatistik
-**``text
-Anzahl exportierter Ur*unden
+
+```text
+Anzahl exportierter Urkunden
 Anzahl neuer INDI
-*nzahl geänderter INDI
-Anzahl*neuer FAM
+Anzahl geänderter INDI
+Anzahl neuer FAM
 Anzahl geänderter FAM
-``*
+```
 
-####*Verarbeitete Urkunden
+#### Verarbeitete Urkunden
 
-Auf*istung aller exportierten Urkunden*
+Auflistung aller exportierten Urkunden:
 
-```text*1878-0015
-187*-0016
+```text
+1878-0015
+1878-0016
 1878-0017
 ...
-*``
+```
 
 oder alternativ
 
-*``text
+```text
 15/1878
 16/1878
-17*1878
+17/1878
 ...
 ```
 
-Die konkrete*Darstellung kann konfigurierbar se*n.
+Die konkrete Darstellung kann konfigurierbar sein.
 
-### Auffäll*gkeiten
+### Auffälligkeiten
 
-Dokumentation von*
+Dokumentation von:
 
 ```text
 Warnungen
-Übers*rungene Datensätze
-Nicht*exportierte Datensätze
+Übersprungene Datensätze
+Nicht exportierte Datensätze
 ```
 
-## Dat*iben*nnung
+## Dateibenennung
 
 Prüfberichte:
 
 ```text
-proj*kt_pruefbericht.md
+projekt_pruefbericht.md
 ```
 
-Exportberi*hte:
-
-*``text
-projekt_export_YYYY-MM-DD*HH-MM.md
-```
-
-Be*spiel:
+Exportberichte:
 
 ```text
-sul*bach_export_2026*11-11_14-35.md
+projekt_export_YYYY-MM-DD_HH-MM.md
 ```
-
-## Auf*ewahrung
-
-Berichte werden außerhal**der EDG-Datei gespeichert*
-
-Sie können unabhängig vom Projek*:
-
-- archiviert*- versendet
-- ausgedruckt*- versioniert
-
-werden*
-
-## Benutzerober*läche
-
-Das Programm stellt Funktio*en*bereit für:
-
-### Prüfberichte*
-```text
-Prüfbericht erstellen*Prüfbericht anzeigen
-Prü*bericht speichern
-```
-
-### Export*erichte
-
-```text
-Exportbericht anz*igen
-Export*rdner öffnen
-Exportbericht*erneut erzeugen
-```
-
-## Beziehung *um*Änderungsprotokoll
-
-### Änderungsp*otokoll*
-ADR-012
-
-Z*eck:
-
-```text
-vollständige Histori*
-```
-
-Be*spiel:
-
-```text
-Wer hat*wann was geändert?
-```
-
-### Prüf- *nd Exportberichte
-
-ADR-013
-
-Zweck*
-
-```text
-fachliche Zusammenfassun*
-*``
 
 Beispiel:
 
 ```text
-Was*enthält dieses Projekt aktuell?
-Wa**wurde exportiert?
+sulzbach_export_2026-11-11_14-35.md
 ```
 
-Be*de Funktionen ergänzen sich.
+## Aufbewahrung
 
-##*Architekturprinzip
+Berichte werden außerhalb der EDG-Datei gespeichert.
 
-Für ged_editor*gilt:
+Sie können unabhängig vom Projekt:
 
-> Jeder*Export muss reproduzierbar und*später nachvollziehbar sein*
+- archiviert
+- versendet
+- ausgedruckt
+- versioniert
 
-Zu jeder*erzeugten GEDCOM-Datei gehört ein*eigener Exportbericht.
+werden.
 
-## Konsequ*nzen
+## Benutzeroberfläche
 
-###*Vorteile
+Das Programm stellt Funktionen bereit für:
 
-- transparente Projektko*trolle
+### Prüfberichte
+
+```text
+Prüfbericht erstellen
+Prüfbericht anzeigen
+Prüfbericht speichern
+```
+
+### Exportberichte
+
+```text
+Exportbericht anzeigen
+Exportordner öffnen
+Exportbericht erneut erzeugen
+```
+
+## Beziehung zum Änderungsprotokoll
+
+### Änderungsprotokoll
+
+ADR-012
+
+Zweck:
+
+```text
+vollständige Historie
+```
+
+Beispiel:
+
+```text
+Wer hat wann was geändert?
+```
+
+### Prüf- und Exportberichte
+
+ADR-013
+
+Zweck:
+
+```text
+fachliche Zusammenfassung
+```
+
+Beispiel:
+
+```text
+Was enthält dieses Projekt aktuell?
+Was wurde exportiert?
+```
+
+Beide Funktionen ergänzen sich.
+
+## Architekturprinzip
+
+Für ged_editor gilt:
+
+> Jeder Export muss reproduzierbar und später nachvollziehbar sein.
+
+Zu jeder erzeugten GEDCOM-Datei gehört ein eigener Exportbericht.
+
+## Konsequenzen
+
+### Vorteile
+
+- transparente Projektkontrolle
 - nachvollziehbare Exporte
-* einfache Archivierung
-- bessere Q*alitätssicherung
-- bessere Zusamme*arbeit mit Genealogen
+- einfache Archivierung
+- bessere Qualitätssicherung
+- bessere Zusammenarbeit mit Genealogen
 
-### Nachtei*e
+### Nachteile
 
-- zusätzlicher*Implementierungsaufwand
-- zusätzli*he Dateien im Exportverzeichnis
+- zusätzlicher Implementierungsaufwand
+- zusätzliche Dateien im Exportverzeichnis
 
-D*ese Nachteile werden*zugunsten der Nachvollziehbarkeit *kzeptiert.
+Diese Nachteile werden zugunsten der Nachvollziehbarkeit akzeptiert.
 
 ## Verwandte ADRs
 
-- A*R*001 Urkunde ist führendes Fachobje*t
-- ADR-002 Verwendung einer EDG-P*ojektdatei
-- ADR*006 Quellenzuordnung erfolgt beim *xport
-- ADR-011 GEDCOM-Dateien wer*en niemals direkt bearbeitet
-- ADR*012 Änderungsprotokoll und Revisio*ssicherheit
+- ADR-001 Urkunde ist führendes Fachobjekt
+- ADR-002 Verwendung einer EDG-Projektdatei
+- ADR-006 Quellenzuordnung erfolgt beim Export
+- ADR-011 GEDCOM-Dateien werden niemals direkt bearbeitet
+- ADR-012 Änderungsprotokoll und Revisionssicherheit
