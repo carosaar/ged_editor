@@ -66,10 +66,10 @@ Projektdateien erstellen und verwalten.
 - [x] SQLite-Schema definieren
 - [x] EDG-Dateiformat festlegen
 - [x] Projekterstellung
-- [ ] Projekt öffnen
-- [ ] Projekt speichern
-- [ ] Projekt schließen
-- [ ] Projektinformationen anzeigen
+- [x] Projekt öffnen
+- [x] Projekt speichern
+- [x] Projekt schließen
+- [x] Projektinformationen anzeigen
 
 ## Ergebnis
 

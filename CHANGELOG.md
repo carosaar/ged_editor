@@ -1,5 +1,65 @@
 # Changelog
 
+
+## 0.4.2
+
+# v0.4.2 – Architekturkonsolidierung und ADR\-Konformität
+
+## Datenmodell
+
+- Das Datenmodell wurde vollständig auf den aktuellen Architekturstand gemäß ADR\-015 bis ADR\-021 vereinheitlicht.
+- MarriageRecord ist nun die alleinige fachliche Repräsentation einer Heiratsurkunde und entspricht direkt dem GEDCOM\-FAM\-Datensatz.
+- Die frühere FamilyLink\-Architektur wurde vollständig entfernt.
+- Personendatensätze wurden um strukturierte Geburts\- und Sterbeinformationen erweitert.
+- Konfliktrelevante Importzustände können über source\_snapshot dauerhaft gespeichert werden.
+
+## Workflow und Statusmodell
+
+- Das Workflowmodell wurde auf die fachlich gültigen Zustände reduziert: 
+    - In Bearbeitung
+    - Fertig
+- Das Exportmodell wurde konsequent vom Workflow getrennt: 
+    - Nicht exportiert
+    - Exportiert
+    - Konflikt
+- Datenbankmodell, Constraints und Persistenzlogik wurden entsprechend angepasst.
+
+## Projektkonfiguration
+
+- Die Projektparameter wurden auf den Stand von ADR\-020 angehoben.
+- Unterstützung für: 
+    - MARR.TYPE
+    - Quellenzuordnung (SOUR)
+    - XREF\-Präfixe
+    - REFN\-Präfixe und Suffixe
+    - PAGE\-Präfixe und Suffixe
+    - Standard\-Heiratsorte
+
+## Migration und Kompatibilität
+
+- Bestehende Projektdateien älterer Schema\-Versionen werden weiterhin unterstützt.
+- Die Migrationslogik wurde an das neue Datenmodell angepasst.
+- Historische Tabellen\- und Statusstrukturen verbleiben ausschließlich innerhalb der Kompatibilitätsschicht.
+
+## Qualitätssicherung
+
+- Einführung automatisierter Architekturtests zur Absicherung der ADR\-Vorgaben.
+- Prüfung der Statusmodelle, Datenstrukturen und Projektparameter.
+- Prüfung verbotener Legacy\-Komponenten.
+- Prüfung der Datenbankmigrationen.
+- Prüfung der Modellkonformität gegenüber DATA\_MODEL.md.
+
+## Dokumentation
+
+- Architektur\- und Datenmodelldokumentation synchronisiert.
+- Historische Konzepte und überholte Statusmodelle gekennzeichnet.
+- ADR\-021 in die Projektdokumentation integriert.
+
+## Technische Auswirkungen
+
+Dieses Release enthält keine neuen Benutzerfunktionen. Der Schwerpunkt liegt auf der Bereinigung historischer Architekturentscheidungen und der Schaffung einer stabilen Grundlage für die weitere Entwicklung der Import\-, Konflikt\- und Exportfunktionen.
+
+
 ## 0.4.1
 
 ### Korrigiert
