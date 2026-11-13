@@ -10,20 +10,29 @@ Die Bearbeitung erfolgt ausschließlich innerhalb einer EDG-Projektdatei. GEDCOM
 
 ---
 
-# Projektstatus
+## Projektstatus
 
-## Architektur
+### Aktuelle Version 
+**13.11.2026**
+
+v0.4.2
+
+### Architektur
 
 Status: Abgeschlossen ✅
 
 Vorhandene Architekturentscheidungen:
 
-- ADR-001 bis ADR-021 verabschiedet
-- Konsistenzprüfung durchgeführt
-- Technologiestack festgelegt
-- Workflow definiert
-- Datenfluss definiert
+- ADR\-001 bis ADR\-021 verabschiedet
+- Datenmodell konsolidiert
+- FamilyLink\-Architektur entfernt
+- Workflowmodell abgeschlossen
+- Exportmodell definiert
+- Konfliktmodell definiert
+- Projektparameter definiert
+- Architekturtests etabliert
 
+Die weitere Entwicklung konzentriert sich auf die fachliche Umsetzung der definierten Konzepte.
 ---
 
 # Phase 1 - Projektgrundgerüst
@@ -94,25 +103,33 @@ Domänenmodell implementieren.
 ### Urkunden
 
 - [x] MarriageRecord als Urkunden- und GEDCOM-FAM-Datensatz
-- [ ] Statusmodell (ADR-015)
+- [x] Statusmodell (ADR-015)
 
 ### Personen
 
-- [ ] INDI-Modell
-- [ ] Repository
+- [x] INDI-Modell
+- [x] Repository
 
 ### MarriageRecord/FAM
 
-- [ ] GEDCOM-FAM-XREF im MarriageRecord speichern
+- [x] GEDCOM-FAM-XREF im MarriageRecord speichern
 
 ### Quellen
 
-- [ ] SOUR-Konfiguration
-- [ ] Exportparameter
+- [x] SOUR-Konfiguration
+- [x] Exportparameter
+- [x] source_xref
+- [x] marr_type
+- [x] xref_prefix
+- [x] refn_prefix
+- [x] refn_suffix
+- [x] page_prefix
+- [x] page_suffix
+- [x] marriage_place_default
 
 ## Ergebnis
 
-Fachobjekte persistent speicherbar.
+- [x] Fachobjekte persistent speicherbar.
 
 Status:
 
@@ -130,12 +147,12 @@ Bestehende GEDCOM-Datei importieren.
 
 ## Aufgaben
 
-- [ ] GEDCOM-Datei lesen
-- [ ] INDI importieren
-- [ ] FAM importieren
-- [ ] SOUR importieren
-- [ ] Basisvalidierung
-- [ ] Importbericht
+- [x] GEDCOM-Datei lesen
+- [x] INDI importieren
+- [x] FAM importieren
+- [x] SOUR importieren
+- [x] Basisvalidierung
+- [x] Importbericht
 
 ## Ergebnis
 
@@ -149,62 +166,66 @@ v0.4.0
 
 ---
 
-# Phase 5 - Urkundenverwaltung
+## Phase 5 - Urkundenverwaltung
 
 Ziel:
+Urkunden innerhalb eines Projektes sichtbar und bearbeitbar machen.
 
-Urkunden anlegen und verwalten.
+### Aufgaben
 
-## Aufgaben
+#### Urkundenliste
+- [ ] Urkunden anzeigen
+- [ ] Sortierung Jahr/Nr
+- [ ] Workflowstatus anzeigen
+- [ ] Exportstatus anzeigen
+- [ ] GEDCOM-XREF anzeigen
 
-- [ ] Urkundenliste
-- [ ] Sortierung Jahr-Nr
-- [ ] Filter
-- [ ] Statusanzeige
-- [ ] Anlegen
-- [ ] Bearbeiten
-- [ ] Löschen
+#### Verwaltung
+- [ ] Urkunde anlegen
+- [ ] Urkunde öffnen
+- [ ] Urkunde löschen
 
-## Ergebnis
+#### Filter
+- [ ] Alle Urkunden
+- [ ] In Bearbeitung
+- [ ] Fertig
+- [ ] Nicht exportiert
+- [ ] Konflikt
+- [ ] Exportiert
+
+#### Navigation
+- [ ] Doppelklick öffnet Urkunde
+- [ ] Auswahl synchronisiert Detailansicht
+
+### Ergebnis
 
 Urkunden können vollständig verwaltet werden.
 
-Status:
-
-```text
-v0.5.0
-```
+Status: v0.5.0
 
 ---
 
-# Phase 6 - Erfassungsmaske
+## Phase 6 - Erfassungsmaske Heiratsurkunde
 
 Ziel:
+Komplette Erfassung und Bearbeitung einer Heiratsurkunde.
 
-Komplette Eingabemaske für Heiratsurkunden.
+### Aufgaben
 
-## Aufgaben
-
-### Urkundendaten
-
-- [ ] Nummer
+#### Urkundendaten
 - [ ] Jahrgang
-- [ ] REFN-Vorschau
-- [ ] SOUR.PAGE-Vorschau
+- [ ] Registriernummer
 
-### Heirat
-
+#### Heirat
 - [ ] Datum
-- [ ] Ortsangabe
 - [ ] GEDCOM-Datumsvorschau
+- [ ] Heiratsort
 
-### Ehepartner
+#### Ehepartner
+- [ ] Bräutigam
+- [ ] Braut
 
-- [ ] Mann
-- [ ] Frau
-
-### Notizfelder
-
+#### Notizfelder
 - [ ] Herkunft Mann
 - [ ] Herkunft Frau
 - [ ] Todesvermerk Mann
@@ -213,186 +234,156 @@ Komplette Eingabemaske für Heiratsurkunden.
 - [ ] Randvermerke
 - [ ] Auffälligkeiten
 
-## Ergebnis
+#### Workflow
+- [ ] Fertig-Button
+- [ ] Rücksetzung auf Bearbeitung
+- [ ] Pflichtfeldprüfung gemäß ADR-015
 
-Urkunden können vollständig erfasst werden.
+### Ergebnis
 
-Status:
+Urkunden können vollständig erfasst und zur Exportfreigabe markiert werden.
 
-```text
-v0.6.0
-```
+Status: v0.6.0
 
 ---
 
-# Phase 7 - Personensuche
+## Phase 7 - Personenverwaltung und Personenzuordnung
 
 Ziel:
+Personendatensätze sichtbar und bearbeitbar machen.
 
-Vorhandene Personen identifizieren.
+### Aufgaben
 
-## Aufgaben
+#### Personenliste
+- [ ] Alle Personen anzeigen
+- [ ] Suche
+- [ ] Filter
 
+#### Personeneditor
+- [ ] Name
+- [ ] Geschlecht
+- [ ] Geburt
+- [ ] Tod
+
+#### Zuordnung
+- [ ] Bräutigam einer Person zuordnen
+- [ ] Braut einer Person zuordnen
+
+#### Neuanlage
+- [ ] Neue Person anlegen
+- [ ] Bestehende Person auswählen
+
+### Ergebnis
+
+Urkunden sind mit Personendatensätzen verknüpft.
+
+Status: v0.7.0
+
+---
+
+## Phase 8 - Personensuche
+
+Ziel:
+Vorhandene Personen komfortabel identifizieren.
+
+### Aufgaben
 - [ ] rapidfuzz integrieren
 - [ ] Kandidatenliste
+- [ ] Ähnlichkeitsanzeige
 - [ ] Suchdialog
 - [ ] Zuordnungsdialog
-- [ ] Personenvorschläge
+- [ ] Mehrfachtrefferbehandlung
 
-## Ergebnis
+### Ergebnis
 
-Vorhandene Personen können komfortabel zugeordnet werden.
+Vorhandene Personen können sicher und komfortabel wiederverwendet werden.
 
-Status:
-
-```text
-v0.7.0
-```
+Status: v0.8.0
 
 ---
 
-# Phase 8 - Änderungsprotokoll
+## Phase 9 - Änderungsprotokoll und Backups
 
 Ziel:
+Nachvollziehbarkeit und Wiederherstellbarkeit von Projekten.
 
-Revisionssicherheit.
+### Aufgaben
 
-## Aufgaben
-
+#### Änderungsprotokoll
 - [ ] Ereignisprotokoll
 - [ ] Änderungsviewer
 - [ ] Filter
-- [ ] Suchfunktion
+- [ ] Suche
 
-## Ergebnis
-
-Alle Änderungen werden protokolliert.
-
-Status:
-
-```text
-v0.8.0
-```
-
----
-
-# Phase 9 - Backupsystem
-
-Ziel:
-
-Projektwiederherstellung.
-
-## Aufgaben
-
+#### Backups
 - [ ] Automatische Backups
 - [ ] Manuelle Backups
 - [ ] Backupmanager
 - [ ] Wiederherstellung
 
-## Ergebnis
+### Ergebnis
 
-Projektstände sind wiederherstellbar.
+Projektstände sind nachvollziehbar und wiederherstellbar.
 
-Status:
-
-```text
-v0.9.0
-```
+Status: v0.9.0
 
 ---
 
-# Phase 10 - GEDCOM-Export
+## Phase 10 - GEDCOM-Export
 
 Ziel:
+Umsetzung der in ADR-017 bis ADR-020 definierten Exportarchitektur.
 
-Erzeugung einer neuen GEDCOM-Datei.
+### Aufgaben
 
-## Aufgaben
-
+#### Exportvorbereitung
 - [ ] SOUR-Auswahl
-- [ ] REFN-Erzeugung
-- [ ] SOUR.PAGE-Erzeugung
-- [ ] SOUR.NOTE-Erzeugung
-- [ ] INDI-Export
-- [ ] FAM-Export
-- [ ] Validierung
-- [ ] Exportprotokoll
+- [ ] Projektparameter prüfen
+- [ ] Header-Prüfung
 
-## Ergebnis
+#### Konfliktprüfung
+- [ ] source_snapshot auswerten
+- [ ] Hinweise
+- [ ] Maßnahmen erforderlich
+- [ ] Konflikte
 
-Erste vollständige End-to-End-Version.
+#### Export
+- [ ] REFN erzeugen
+- [ ] PAGE erzeugen
+- [ ] NOTE erzeugen
+- [ ] INDI exportieren
+- [ ] FAM exportieren
+- [ ] FAMS erzeugen
+- [ ] HEAD.NOTE aktualisieren
 
-Status:
+#### Abschluss
+- [ ] Exportstatus aktualisieren
+- [ ] Sperrlogik anwenden
+- [ ] Exportbericht erzeugen
+- [ ] Konfliktbericht erzeugen
 
-```text
-v1.0.0
-```
+### Ergebnis
+
+Vollständiger GEDCOM-Export gemäß ADR-017 bis ADR-020.
+
+Status: v1.0.0
 
 ---
 
-# Phase 11 - Qualitätssicherung
+## Phase 11 - Qualitätssicherung
 
 Ziel:
-
 Produktive Nutzbarkeit.
 
-## Aufgaben
-
-- [ ] Prüfroutinen
+### Aufgaben
 - [ ] Plausibilitätsprüfungen
 - [ ] Prüfberichte
 - [ ] Performanceoptimierung
 - [ ] Fehlerkorrekturen
+- [ ] Benutzerfeedback einarbeiten
 
-## Ergebnis
+### Ergebnis
 
 Produktionsreife Version.
 
-Status:
-
-```text
-v1.1.0
-```
-
----
-
-# Zukunftsthemen
-
-## Mögliche Erweiterungen
-
-### Geburtsurkunden
-
-- Geburt
-- Taufe
-- Elterninformationen
-
-### Sterbeurkunden
-
-- Tod
-- Bestattung
-- Todesursachen
-
-### Komfortfunktionen
-
-- PDF-Berichte
-- Statistiken
-- Massenbearbeitung
-- Dublettenanalyse
-
-### Architektur
-
-- Undo / Redo
-- Datenbankschema-Migrationen
-- Plugin-System
-
----
-
-# Nicht Bestandteil von Version 1.x
-
-- Mehrbenutzerbetrieb
-- Cloudspeicherung
-- Webanwendung
-- Direkte GEDCOM-Bearbeitung
-- Automatische Personenzusammenführung
-
-Diese Funktionen widersprechen den aktuellen Architekturentscheidungen oder besitzen derzeit keine Priorität.
+Status: v1.1.0
