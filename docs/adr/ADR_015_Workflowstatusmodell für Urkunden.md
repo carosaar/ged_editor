@@ -56,6 +56,20 @@ Die Urkunde wurde durch den Benutzer ausdrücklich zur Exportfreigabe markiert.
 
 ---
 
+## Abbruch der Bearbeitung
+
+Der Benutzer kann eine laufende Bearbeitung abbrechen.
+
+Vor dem Verwerfen nicht gespeicherter Änderungen muss eine Rückfrage erfolgen.
+
+Bei Bestätigung:
+
+- Änderungen werden verworfen
+- die Erfassungsmaske wird geleert
+- keine Urkunde bleibt ausgewählt
+
+---
+
 ## Pflichtfelder für Heiratsurkunden
 
 Für die Freigabe einer Heiratsurkunde müssen mindestens folgende Informationen vorhanden sein:

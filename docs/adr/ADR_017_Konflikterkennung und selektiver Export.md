@@ -338,12 +338,120 @@ Andere konfliktfreie Urkunden können weiterhin exportiert werden.
 
 ---
 
-# Selektiver Export
 
-Der Export erfolgt ausschließlich für Urkunden, die:
+---
 
-- keine Konflikte besitzen
-- nicht ausdrücklich zurückgestellt wurden
+# Manueller Exportausschluss
+
+Zusätzlich zum Exportstatus kann eine Urkunde ausdrücklich vom Export ausgeschlossen werden.
+
+Der Exportausschluss erfolgt durch den Benutzer.
+
+---
+
+## Speicherung
+
+Der Exportausschluss wird im MarriageRecord gespeichert:
+
+```text
+no_export
+```
+
+Zulässige Werte:
+
+```text
+TRUE
+
+FALSE
+```
+
+---
+
+## Bedeutung
+
+```text
+FALSE
+```
+
+Die Urkunde darf exportiert werden.
+
+```text
+TRUE
+```
+
+Die Urkunde wird bei Exportläufen übersprungen.
+
+---
+
+## Beziehung zum Exportstatus
+
+Der Exportausschluss ist kein Exportstatus.
+
+Er verändert weder:
+
+```text
+workflow_status
+```
+
+noch:
+
+```text
+export_status
+```
+
+---
+
+## Verwendung
+
+Der Exportausschluss dient beispielsweise:
+
+- zum Zurückstellen einzelner Urkunden
+- zur vorübergehenden Auslassung
+- für Testzwecke
+- zur manuellen Qualitätskontrolle
+
+---
+
+## Benutzeroberfläche
+
+Die Familien- und Urkundenliste enthält eine Auswahlspalte:
+
+```text
+☑
+```
+
+bedeutet:
+
+```text
+Export zulässig
+```
+
+```text
+☐
+```
+
+bedeutet:
+
+```text
+Vom Export ausgeschlossen
+```
+---
+
+## Exportlauf
+
+Während des Exports werden ausschließlich Urkunden verarbeitet, für die gilt:
+
+```text
+workflow_status = Fertig
+
+UND
+
+export_status != Exportiert
+
+UND
+
+NoExport = FALSE
+```
 
 ---
 

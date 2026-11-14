@@ -353,6 +353,150 @@ Geschlecht wird Rollenspezifisch (HUSB/WIFE) festgelegt. Auf neuere Besonderheit
 
 ---
 
+# Verarbeitung von NAME
+
+GEDCOM-Namen werden intern nicht als unverarbeiteter NAME-Tag dargestellt.
+
+Für die Benutzeroberfläche erfolgt eine Zerlegung in fachliche Bestandteile.
+
+---
+
+## Beispiel
+
+GEDCOM:
+
+```text
+Horst Albert /Müller/ von
+```
+
+wird intern zerlegt in:
+
+```text
+Vorname
+
+Horst Albert
+
+Nachname
+
+Müller
+
+Namenszusatz
+
+von
+```
+
+---
+
+## Anzeige
+
+Für die Anzeige innerhalb der Anwendung wird ausschließlich verwendet:
+
+```text
+Nachname, Vorname
+```
+
+Beispiel:
+
+```text
+Müller, Horst Albert
+```
+
+Die originale GEDCOM-Notation
+
+```text
+Horst Albert /Müller/ von
+```
+
+wird dem Benutzer nicht angezeigt.
+
+---
+
+## Personensuche
+
+Die Personensuche arbeitet auf den aufgetrennten Namensbestandteilen.
+
+Durchsucht werden:
+
+```text
+Vorname
+
+Nachname
+
+Geburtsdatum
+
+Geburtsort
+```
+
+Mehrere Suchbegriffe werden als UND-Verknüpfung behandelt.
+
+Beispiel:
+
+```text
+Mü ho 78
+```
+
+findet:
+
+```text
+Müller, Horst
+Geburtsjahr 1878
+```
+
+---
+
+## Änderung von Namen
+
+Vorname und Nachname können bearbeitet werden.
+
+Bei Änderung einer bereits zugeordneten Person muss eine Sicherheitsabfrage erfolgen.
+
+Beispiel:
+
+```text
+Sie ändern den Namen einer bereits zugeordneten Person.
+
+Die Änderung wirkt sich auf alle Verwendungen dieser Person im Projekt aus.
+
+Änderung übernehmen?
+```
+
+---
+
+## Export
+
+Beim Export wird der NAME-Tag wieder aus den Bestandteilen zusammengesetzt.
+
+Namenszusätze, die sich nach dem letzten Trennzeichen
+
+```text
+/
+```
+
+befanden, bleiben erhalten.
+
+Beispiel:
+
+Import:
+
+```text
+Horst Albert /Müller/ von
+```
+
+Bearbeitung:
+
+```text
+Horst Alban
+Mayer
+```
+
+Export:
+
+```text
+Horst Alban /Mayer/ von
+```
+
+---
+
 ## FAMS
 
 Für einen neu angelegten FAM-Datensatz wird zusätzlich erzeugt:

@@ -6,7 +6,7 @@
 
 Dieses Dokument beschreibt das fachliche Datenmodell von ged_editor und die Beziehungen zwischen den zentralen Entitäten.
 
-Die Definition basiert auf den ADRs 001 bis 021.
+Die Definition basiert auf den ADRs 001 bis 022.
 
 Insbesondere:
 
@@ -265,13 +265,24 @@ Fertig
 
 Gemäß ADR-019:
 
-```text
 export_status
 
 Nicht exportiert
 Exportiert
 Konflikt
-```
+
+Zusätzlich:
+
+no_export
+
+TRUE
+FALSE
+
+Der Exportstatus beschreibt den Zustand
+des Exportsystems.
+
+no_export beschreibt eine ausdrückliche
+Benutzerentscheidung und ist kein Exportstatus.
 
 ---
 
@@ -561,6 +572,7 @@ MarriageRecord
 | display_number         |
 | workflow_status        |
 | export_status          |
+| no_export              |
 | marriage_date_raw      |
 | marriage_date_gedcom   |
 | marriage_place         |
@@ -650,6 +662,7 @@ erDiagram
         string display_number
         string workflow_status
         string export_status
+        boolean no_export
         string marriage_date_raw
         string marriage_date_gedcom
         string marriage_place
@@ -739,3 +752,27 @@ Die interne Repräsentation ist Implementierungsdetail.
 GEDCOM-Dateien werden niemals direkt bearbeitet.
 
 Gemäß ADR-011 erfolgt jede Bearbeitung innerhalb des EDG-Projektes.
+
+---
+
+### 7. Exportentscheidung und Exportstatus sind getrennt
+
+Für MarriageRecord gelten zwei unabhängige Konzepte:
+
+```text
+export_status
+```
+
+beschreibt den Zustand des Exportsystems.
+
+```text
+no_export
+```
+
+beschreibt die Entscheidung des Benutzers,
+eine Urkunde aktuell nicht exportieren zu wollen.
+
+Der Exportstatus wird durch das System gesetzt.
+
+Der Wert von no_export wird ausschließlich
+durch den Benutzer festgelegt.

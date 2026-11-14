@@ -169,15 +169,29 @@ Die Bearbeitung einer Person darf deshalb nicht vom Exportstatus einer einzelnen
 
 ---
 
-# Wiederholungsexporte
+# Exportvoraussetzungen
 
-Bereits exportierte Urkunden werden bei späteren Exportläufen grundsätzlich übersprungen.
-
-Exportiert werden ausschließlich Urkunden mit dem Status:
+Eine Urkunde wird nur exportiert, wenn alle folgenden Bedingungen erfüllt sind:
 
 ```text
-Nicht exportiert
+workflow_status = Fertig
+
+export_status = Nicht exportiert
+
+no_export = FALSE
 ```
+
+---
+
+Urkunden mit
+
+```text
+no_export = TRUE
+```
+
+werden übersprungen.
+
+Der Exportstatus bleibt dabei unverändert.
 
 ---
 
